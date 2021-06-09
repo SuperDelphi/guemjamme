@@ -1,0 +1,142 @@
+/* TODO : A faire plus tard
+.player_box {
+    display: flex;
+    align-items: center;
+    margin-left: -5%;
+    padding-right: 3rem;
+    border-radius: 30px;
+}
+.player_box:not(.points-display) {
+    width: min-content;
+}
+.player_box.points-display.color-dark_pink {
+    background-color: var(--color_player_dark_pink);
+}
+.player_box.points-display.color-light_pink {
+    background-color: var(--color_player_light_pink);
+}
+.player_box.points-display.color-blue {
+    background-color: var(--color_player_blue);
+}
+.player_box.points-display.color-yellow {
+    background-color: var(--color_player_yellow);
+}
+.player_box.points-display.color-green {
+    background-color: var(--color_player_green);
+}
+.player_box.points-display.color-brown {
+    background-color: var(--color_player_brown);
+}
+
+.player_box:not(:last-child) {
+    margin-bottom: 1rem;
+}
+
+.player_box .player-picture {
+    height: 5rem;
+    margin-right: 1.5rem;
+    padding: .1rem;
+    border: 3px solid var(--color_player_yellow);
+    border-radius: 50%;
+    background-color: var(--color_white);
+}
+.player_box .player-picture img {
+    height: 100%;
+}
+.player_box .player-infos {
+    color: var(--color_word_font_fill);
+}
+.player_box.points-display .player-infos {
+    display: none;
+}
+.player_box.points-display .points-won {
+    display: flex;
+}
+.player_box .player-infos .player-name {
+    margin-bottom: .3rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--color_word_font_fill);
+    text-transform: uppercase;
+}
+
+.player_box .player-infos .player-score {
+    display: flex;
+}
+
+.player_box .player-infos .player-score .player-points-count {
+    margin-right: .3rem;
+    font-size: 1.5rem;
+}
+
+.player_box .player-infos .player-score .player-points-title {
+    align-self: flex-end;
+    font-size: 1.2rem;
+}
+.player_box .points-won {
+    position: relative;
+}
+.player_box .points-won .word-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color_word_font_fill);
+}
+.player_box .points-won .points {
+    position: absolute;
+    top: 0;
+    left: 7.5rem;
+    display: flex;
+    margin-top: -.2rem;
+}
+.player_box .points-won .points p {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color_player_blue);
+}
+
+ */
+
+.hidden{
+    display: none;
+}
+
+
+.player-picture{
+    background-color: var(--color_player_yellow);
+    width: min-content;
+    display: flex;
+    border-radius: 50px;
+}
+
+.player-picture img{
+    height: 5rem;
+    border-radius: 50px;
+    border: 3px solid var(--color_player_yellow) ;
+    background-color: var(--color_white);
+}
+.points-won{
+    display: flex;
+    margin-top: -.2rem;
+
+}
+
+.add-point{
+    position: relative;
+    left: 5rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

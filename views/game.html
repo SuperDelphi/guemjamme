@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Accueil</title>
+        <link rel="stylesheet" href="css/master.css">
+    </head>
+
+    <body>
+        <header>
+            <h1>WORDUS.io</h1>
+
+            <nav class="preferences">
+                <p><span class="bold">Nombre de joueurs : </span>0</p>
+                <p><span class="bold">Temps restant : </span> 00:00</p>
+            </nav>
+        </header>
+
+        <section class="playground">
+            <div class="players-list">
+                <div style="display:none" class="player_box points-display color-yellow">
+                    <div class="player-picture">
+                        <img src="../src/img/avatar_1.png" alt="Image du joueur">
+                    </div>
+
+                    <div class="player-infos">
+                        <p class="player-name">Nom joueur</p>
+
+                        <div class="player-score">
+                            <p class="player-points-count">999</p>
+                            <p class="player-points-title">pts</p>
+                        </div>
+                    </div>
+
+                    <div class="points-won">
+                        <p class="word-name">Mot</p>
+
+                        <div class="player-score">
+                            <p class="player-points-count">999</p>
+                            <p class="player-points-title">pts</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="player-picture">
+                        <img src="../src/img/avatar_1.png" alt="Image du joueur">
+                        <div class="points-won">
+                            <p>Icarus</p>
+                            <p class="add-point">+<span>56</span></p>
+                        </div>
+                    </div>
+                    <div class="player-score hidden">
+                        <p class="player-points-count">999</p>
+                        <p class="player-points-title">pts</p>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="game-words">
+                <div class="word">
+                    <div class="players-circles">
+                        <span class="circle color-green"></span>
+
+                        <span class="circle color-yellow"></span>
+                    </div>
+
+                    <div class="word-container default">
+                        <p>Mot</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-input">
+                <div class="input">
+                    <p class="player-name">MOI</p>
+                    <input type="text" placeholder="...">
+                </div>
+
+                <div class="points-container">
+                    <p class="points-count">999</p>
+                    <p class="points-title">pts</p>
+                </div>
+            </div>
+        </section>
+
+
+    </body>
+</html>

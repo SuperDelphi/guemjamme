@@ -1,0 +1,58 @@
+.word {
+    position: absolute;
+}
+
+.word .players-circles {
+    display: flex;
+    margin-bottom: .6rem;
+}
+
+.word .players-circles .circle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.word .players-circles .circle.color-dark_pink {
+    background-color: var(--color_player_dark_pink);
+}
+
+.word .players-circles .circle.color-light_pink {
+    background-color: var(--color_player_light_pink);
+}
+
+.word .players-circles .circle.color-blue {
+    background-color: var(--color_player_blue);
+}
+
+.word .players-circles .circle.color-yellow {
+    background-color: var(--color_player_yellow);
+}
+
+.word .players-circles .circle.color-green {
+    background-color: var(--color_player_green);
+}
+
+.word .players-circles .circle.color-brown {
+    background-color: var(--color_player_brown);
+}
+
+.word .players-circles .circle:not(:last-child) {
+    margin-right: .5rem;
+}
+.word .word-container.default {
+    border: 3px solid var(--color_word_default);
+}
+
+.word .word-container {
+    padding: .8rem 3rem;
+    border-radius: 25px;
+    background-color: var(--color_white);
+}
+
+.word p {
+    color: var(--color_word_default);
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-transform: lowercase;
+}

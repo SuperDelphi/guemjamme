@@ -1,0 +1,17 @@
+body.join {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+body.join form {
+    width: 30%;
+}
+
+body.join .form-wrapper {
+    background-color: var(--color_white);
+}
+
+body.join .submit-wrapper {
+
+}

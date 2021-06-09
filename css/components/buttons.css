@@ -1,0 +1,7 @@
+.btn {
+
+}
+
+.btn.color-pink {
+    background-color: var(--color_player_light_pink);
+}
