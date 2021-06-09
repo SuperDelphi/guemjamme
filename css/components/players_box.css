@@ -1,4 +1,4 @@
-/* TODO : A faire plus tard
+/* TODO : A faire plus tard*/
 .player_box {
     display: flex;
     align-items: center;
@@ -94,36 +94,9 @@
     color: var(--color_player_blue);
 }
 
- */
-
-.hidden{
-    display: none;
-}
 
 
-.player-picture{
-    background-color: var(--color_player_yellow);
-    width: min-content;
-    display: flex;
-    border-radius: 50px;
-}
 
-.player-picture img{
-    height: 5rem;
-    border-radius: 50px;
-    border: 3px solid var(--color_player_yellow) ;
-    background-color: var(--color_white);
-}
-.points-won{
-    display: flex;
-    margin-top: -.2rem;
-
-}
-
-.add-point{
-    position: relative;
-    left: 5rem;
-}
 
 
 
