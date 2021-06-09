@@ -19,16 +19,17 @@ https://trello.com/b/V9thTpmx/guemjamme
 
 02:20- Bug Code with me Blocage du dev
 
-02:51- Correction du Bug dev relancé (Front & socket.io)
+02:51- Correction du Bug dev relancé (socket.io)
 
 05:00- Installation de scocket.io Terminer
 
-06:20- Disign Terminer
+06:20- Disign Terminer (debut du dev Front)
 
-8:00- Comception du systeme de room
+08:00- Reflexion du systeme de room
 
+11:00- Pause Dodo pour certains
 
-
+13:00- Fin de Front des trois pages prévue
 
 
 

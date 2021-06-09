@@ -4,7 +4,9 @@ class UserFactory {
     getFromSocket = user => {
         return new User(
             user.uuid,
-            user.name
+            user.name,
+            user.color,
+            user.avatar
         );
     }
 }

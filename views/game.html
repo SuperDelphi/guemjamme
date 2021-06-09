@@ -1,194 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Accueil</title>
-        <link rel="stylesheet" href="css/master.css">
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="js/client/game_bundle.js"></script>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <title>Accueil</title>
+    <link rel="stylesheet" href="../css/master.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/client/game_bundle.js"></script>
+</head>
 
-    <body>
-        <header>
-            <h1>WORDUS.io</h1>
+<body>
+<header>
+    <h1>WORDUS.io</h1>
 
-            <nav class="preferences">
-                <p><span class="bold">Nombre de joueurs : </span>0</p>
-                <p><span class="bold">Temps restant : </span> 00:00</p>
-            </nav>
-        </header>
+    <nav class="preferences">
+        <p><span class="bold">Nombre de joueurs : </span>0</p>
+        <p><span class="bold">Temps restant : </span> 00:00</p>
+    </nav>
+</header>
 
-        <section class="playground">
-            <div class="players-list">
+<section class="playground">
+    <div class="players-list">
 
-                <div class="player_box color-yellow">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_1.png" alt="Image du joueur">
-                        <div class="points-won">
-                            <p>Icarudazdazdazda</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="player-infos hidden">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player_box color-blue">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_2.png" alt="Image du joueur">
-                        <div class="points-won hidden">
-                            <p>Icarus</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="player-infos">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player_box color-green">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_2.png" alt="Image du joueur">
-                        <div class="points-won hidden">
-                            <p>Icarus</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="player-infos">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player_box color-light-pink">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_2.png" alt="Image du joueur">
-                        <div class="points-won hidden">
-                            <p>Icarus</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="player-infos">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player_box color-brown">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_1.png" alt="Image du joueur">
-                        <div class="points-won">
-                            <p>Icarudazds</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="player-infos hidden">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="player_box color-dark-pink">
-                    <div class="player-picture">
-                        <img src="../src/img/avatar_2.png" alt="Image du joueur">
-                        <div class="points-won hidden">
-                            <p>Icarus</p>
-                            <div class="add-point">
-                                <p>+</p>
-                                <p>56</p>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="player-infos">
-                        <p class="player-name">Hokanosekai</p>
-
-                        <div class="player-score">
-                            <p class="player-points-count">999</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="game-words">
-                <div class="word">
-                    <div class="players-circles">
-                        <span class="circle color-yellow"></span>
-                        <span class="circle color-blue"></span>
-                        <span class="circle color-green"></span>
-                        <span class="circle color-light_pink"></span>
-                        <span class="circle color-brown"></span>
-                        <span class="circle color-dark_pink"></span>
-                    </div>
-
-                    <div class="word-container default">
-                        <p>Exemple</p>
+        <div class="player_box color-yellow">
+            <div class="player-picture">
+                <img src="../src/img/avatar_1.png" alt="Image du joueur">
+                <div class="points-won">
+                    <p>Icarudazdazdazda</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
                     </div>
                 </div>
             </div>
 
-            <div class="player-input">
-                <div class="input">
-                    <p class="player-name">MOI</p>
-                    <input type="text" placeholder="...">
-                </div>
+            <div class="player-infos hidden">
+                <p class="player-name">Hokanosekai</p>
 
-                <div class="points-container">
-                    <p class="points-count">999</p>
-                    <p class="points-title">pts</p>
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <div class="player_box color-blue">
+            <div class="player-picture">
+                <img src="../src/img/avatar_2.png" alt="Image du joueur">
+                <div class="points-won hidden">
+                    <p>Icarus</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="player-infos">
+                <p class="player-name">Hokanosekai</p>
+
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="player_box color-green">
+            <div class="player-picture">
+                <img src="../src/img/avatar_2.png" alt="Image du joueur">
+                <div class="points-won hidden">
+                    <p>Icarus</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="player-infos">
+                <p class="player-name">Hokanosekai</p>
+
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="player_box color-light-pink">
+            <div class="player-picture">
+                <img src="../src/img/avatar_2.png" alt="Image du joueur">
+                <div class="points-won hidden">
+                    <p>Icarus</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="player-infos">
+                <p class="player-name">Hokanosekai</p>
+
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="player_box color-brown">
+            <div class="player-picture">
+                <img src="../src/img/avatar_1.png" alt="Image du joueur">
+                <div class="points-won">
+                    <p>Icarudazds</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-infos hidden">
+                <p class="player-name">Hokanosekai</p>
+
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="player_box color-dark-pink">
+            <div class="player-picture">
+                <img src="../src/img/avatar_2.png" alt="Image du joueur">
+                <div class="points-won hidden">
+                    <p>Icarus</p>
+                    <div class="add-point">
+                        <p>+</p>
+                        <p>56</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="player-infos">
+                <p class="player-name">Hokanosekai</p>
+
+                <div class="player-score">
+                    <p class="player-points-count">999</p>
+                    <p class="player-points-title">pts</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="game-words">
+        <div class="word case1">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case2">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case3">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case4">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case5">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case6">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case7">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+        <div class="word case8">
+            <div class="players-circles">
+                <span class="circle color-yellow"></span>
+                <span class="circle color-blue"></span>
+                <span class="circle color-green"></span>
+                <span class="circle color-light_pink"></span>
+                <span class="circle color-brown"></span>
+                <span class="circle color-dark_pink"></span>
+            </div>
+
+            <div class="word-container default">
+                <p>Exemple</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="player-input">
+        <div class="input">
+            <p class="player-name">MOI</p>
+            <input type="text" placeholder="...">
+        </div>
+
+        <div class="points-container">
+            <p class="points-count">999</p>
+            <p class="points-title">pts</p>
+        </div>
+    </div>
+</section>
 
 
-    </body>
+</body>
 </html>
