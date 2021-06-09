@@ -40,6 +40,9 @@
 .word .players-circles .circle:not(:last-child) {
     margin-right: .5rem;
 }
+
+
+
 .word .word-container.default {
     border: 3px solid var(--color_word_default);
 }

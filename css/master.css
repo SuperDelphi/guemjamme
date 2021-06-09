@@ -7,11 +7,12 @@
 @import 'components/words.css';
 @import 'components/players_box.css';
 
+@import 'pages/join.css';
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    user-select: none;
     font: 12px 'Spartan', sans-serif;
 }
 

@@ -2,16 +2,65 @@ body.join {
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100vh;
 }
-
 body.join form {
-    width: 30%;
+
 }
 
 body.join .form-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 80%;
+    margin-bottom: 2rem;
+    padding: 3rem;
+    border-radius: 25px;
     background-color: var(--color_white);
 }
 
-body.join .submit-wrapper {
+body.join .form-wrapper img {
+    height: 12rem;
+    margin-bottom: 2.5rem;
+    border: 5px solid var(--color_player_light_pink);
+    border-radius: 50%;
+}
 
+body.join .form-wrapper .btn {
+    margin-bottom: 2rem;
+}
+
+body.join .form-wrapper .pseudo-choice {
+    display: flex;
+    flex-direction: column;
+}
+
+body.join .form-wrapper .pseudo-choice label {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+body.join .form-wrapper .pseudo-choice input {
+    padding: 1rem 2rem;
+    border: 2px solid var(--color_word_default);
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--color_word_font_fill);
+    outline: none;
+}
+
+body.join .submit-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+    border-radius: 10px;
+    background-color: var(--color_player_blue);
+    cursor: pointer;
+}
+
+body.join .submit-wrapper p {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: white;
 }
