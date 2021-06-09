@@ -2,16 +2,14 @@
 class User {
     uuid
     name
-    points
-    multiplier
     color
     avatar
 
     constructor(uuid, name, color, avatar) {
         this.uuid = uuid;
         this.name = name;
-        this.points = 0;
-        this.resetMultiplier();
+        this.color = color;
+        this.avatar = avatar;
     }
 
     getUUID = () => {
@@ -22,22 +20,6 @@ class User {
         return this.name;
     }
 
-    getPoints = () => {
-        return this.points;
-    }
-
-    getMultiplier = () => {
-        return this.multiplier;
-    }
-
-    setMultiplier = multiplier => {
-        this.multiplier = multiplier;
-    }
-
-    resetMultiplier = () => {
-        this.multiplier = 1;
-    }
-
     getInfo = () => {
         return {color: this.color, avatar: this.avatar};
     }
@@ -45,14 +27,6 @@ class User {
     setInfo = (color, avatar) => {
         this.color = color;
         this.avatar = avatar;
-    }
-
-    addPoints = points => {
-        this.points += points;
-    }
-
-    resetPoints = () => {
-        this.points = 0;
     }
 }
 module.exports = User
@@ -66,14 +40,29 @@ const{ setCookie, getCookie } = require('../functions');
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    socket.emit(
-        'host_room',
-        // TODO ({gameDuration, wordAmount}, name, color, avatar)
-        {p: {gameDuration: 60, wordAmound: 5}, name:"Connard", color:"jaune", avatar:1}
-    );
+    const createRoomForm = document.getElementById('create_room')
+    createRoomForm.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    socket.on("host_success", owner => {
-        setCookie("uuid", owner.uuid, 1);
+        const gameDuration = document.getElementById('game_duration').value;
+        const wordAmount = document.getElementById('words-number').value;
+        const name = document.getElementById('name').value;
+        const avatar = document.getElementById('avatar').getAttribute('src');
+
+        socket.emit(
+            'host_room',
+            // TODO ({gameDuration, wordAmount}, name, color, avatar)
+            {p: {gameDuration: gameDuration, wordAmound: wordAmount}, name: name, color:"jaune", avatar: avatar}
+        );
+    });
+
+
+
+    socket.on("host_success", res => {
+        setCookie("uuid", res.owner.uuid, 1);
+        setCookie("code", res.roomCode, 1);
+
+        window.location.replace("/game");
     });
 
 });
@@ -84,7 +73,9 @@ class UserFactory {
     getFromSocket = user => {
         return new User(
             user.uuid,
-            user.name
+            user.name,
+            user.color,
+            user.avatar
         );
     }
 }

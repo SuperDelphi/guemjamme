@@ -27,19 +27,39 @@ app.get('/', (req, res) => {
                 code = roomCode();
             }
 
-            const room = new Room(code, owner);
+            const room = new Room(code, owner, response.p);
+            socket.emit('host_success', {owner, code});
             global.rooms[code] = room;
-
-            socket.emit('host_success', owner);
 
             socket.disconnect(true);
         });
     });
 });
 
-
+/**
+ * Page de jeu principale
+ */
 app.get('/game', (req, res) => {
     res.sendFile(__dirname + '/views/game.html');
+
+    io.on('connection', (socket) => {
+        socket.on('check_room', res => {
+            const room = global.rooms[res.code];
+
+            if (room === undefined) return;
+            if (!room.hasUser(res.uuid)) return;
+
+
+            const game = new Game(res.code, room.getPreferences().gameDuration, room.getPreferences().wordAmound);
+            room.setGame(game);
+            socket.emit('check_room_success', room);
+        })
+
+        socket.on('start_game', () => {
+            game.sta
+        })
+
+    });
 });
 
 app.get('/join', (req, res) => {

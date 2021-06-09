@@ -1,28 +1,58 @@
 class Room {
     code
     owner
-    nb_words
-    time
+    // Object with {wordAmount, gameDuration}
+    preferences
     users
+    game
+    MAX_CAPACITY = 6
 
-    constructor(code, owner) {
+    constructor(code, owner, preferences) {
         this.code = code;
         this.owner = owner;
+        this.preferences = preferences;
         this.users = {}
         this.users[owner.getUUID()] = owner;
     }
 
-    setInfo = (time, nb_words) => {
-        this.time = time;
-        this.nb_words = nb_words;
+    getUsers = () => {
+        return this.users;
     }
 
-    getInfo = () => {
-        return {time: this.time, nb_words: this.nb_words};
+    removeUser = (uuid) => {
+        delete this.users[uuid];
+    }
+
+    addUser = (user) => {
+        this.users[user.getUUID()] = user;
+    }
+
+    isFull = () => {
+        return this.users.size >= this.MAX_CAPACITY;
+    }
+
+    getPreferences = () => {
+        return this.preferences;
+    }
+
+    setPreferences = (preferences) => {
+        this.preferences = preferences;
+    }
+
+    getGame = () => {
+        return this.game;
+    }
+
+    setGame = (game) => {
+        this.game = game;
     }
 
     getCode = () => {
         return this.code;
+    }
+
+    hasUser = (uuid) => {
+        return this.users[uuid] !== undefined;
     }
 }
 
