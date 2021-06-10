@@ -1,4 +1,5 @@
 const {setCookie} = require('../functions')
+const {io} = require("socket.io-client");
 
 const RoomFactory = require('../factories/RoomFactory');
 const RF = new RoomFactory();
@@ -14,17 +15,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
+        const color = 'pink';
 
-
-        socket.emit('check_room', {code, name, avatar});
+        /**
+         * Demande au server si cette room exist
+         * Si elle n'existe pas rien ne se passe (pour le moment)
+         * Si elle existe un nouvel utilisateur est créé et ajouté à la room
+         */
+        socket.emit('exist_room', code, name, color, avatar);
     });
 
-    socket.on('join_success', res => {
-        setCookie("uuid", res.user.uuid, 1);
-        setCookie("code", res.room.code, 1);
-
-        const room = RF.getFromSocket(res.room);
-        console.log(room)
+    /**
+     * Si le room spécifer dans l'URL exist
+     * Deux nouveau cookie sont enregisté :
+     *  - code
+     *  - uuid
+     * Puis le client est renvoyé vers la page game de la room
+     */
+    socket.on('room_exist', (code, uuid) => {
+        setCookie("uuid", uuid, 1);
+        setCookie("code", code, 1);
 
         window.location.replace("/game");
     });

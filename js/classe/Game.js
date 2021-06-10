@@ -39,6 +39,14 @@ class Game {
     getWords = () => {
         return this.words;
     }
+
+    getUsers = () => {
+        return this.users;
+    }
+
+    setUsers = (users) => {
+        this.users = users;
+    }
 }
 
 module.exports = Game;

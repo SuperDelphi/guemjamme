@@ -1,6 +1,7 @@
+const {io} = require('socket.io-client')
+
 const UserFactory = require("../factories/UserFactory");
 const User = require('../classe/User')
-
 
 const{ setCookie, getCookie } = require('../functions');
 
@@ -18,19 +19,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
 
-        socket.emit('host_room', {
-            p: {gameDuration: gameDuration, wordAmound: wordAmount},
-            name: name,
-            color:"yellow",
-            avatar: avatar
-        });
+        const color = 'yellow';
+        const preferences = {gameDuration, wordAmount};
+
+        /**
+         * Envoie une demande au server pour créer une nouvelle room
+         * Le server crée un nouveau utilisateur qu'il ajoute a la room automatiquement
+         */
+        socket.emit('host_room', preferences, name, color, avatar);
     });
 
-    socket.on("success_host_room", res => {
-        setCookie("uuid", res.uuid, 1);
-        setCookie("code", res.code, 1);
+    /**
+     * Quand le serveur a bien créé la room il renvoit un event
+     * Une fois l'event recu par le client il crée deux cookies
+     *  - un pour l'UUID
+     *  - un pour le code de la room
+     * Ensuite le client est redirigé vers la pgae game
+     */
+    socket.on("success_host_room", (code, uuid) => {
+        setCookie("uuid", uuid, 1);
+        setCookie("code", code, 1);
 
-        socket.emit('new_user_join', {Sroom: res.code, room: res.room});
+
+        //socket.emit('new_user_join', code, serial_room);
         window.location.replace("/game");
     });
 
