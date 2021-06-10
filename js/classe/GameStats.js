@@ -31,3 +31,5 @@ class GameStats {
         this.multiplier += coeff;
     }
 }
+
+module.exports = GameStats;

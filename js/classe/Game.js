@@ -25,7 +25,6 @@ class Game {
         this.wordAmount = wordAmount;
 
         this.users = {}
-
     }
 
     startGame = () => {
@@ -40,7 +39,6 @@ class Game {
     getWords = () => {
         return this.words;
     }
-
-
-
 }
+
+module.exports = Game;
