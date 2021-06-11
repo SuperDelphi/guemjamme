@@ -8,4 +8,4 @@ This project requires NodeJS (with NPM installed).
 For the first installation, you need to execute ``npm install`` in order to install the NPM modules used in the project.
 
 After editing the JavaScript files, you need to use Borwserify to bundle those.
-In order to do that, you need to execute ``browserify input-file -o output-file``, where ``input-file`` is the JavaScript client-side entry point of the project.
+In order to do that, you need to execute ``browserify input-file -o output-file``, where ``input-file`` is to be replaced by each JavaScript file contained in the ``js/client/`` folder (the output file name is the same as the original name, with "_bundle" added as a suffix, in the same folder).
