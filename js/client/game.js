@@ -1,5 +1,6 @@
 const {getCookie} = require('../functions');
 const {io} = require("socket.io-client");
+const {updatePlayerList, setPlayerColor} = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
 const RF = new RoomFactory();
@@ -24,49 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
     * Ces infos permettent de mettre a jours la liste des joueurs
     */
     socket.on('new_join', (serial_room) => {
-        const room = RF.getFromSocket(serial_room)
-        console.table(room)
+        let room = RF.getFromSocket(serial_room)
 
-        const game = room.getGame();
-        game.setUsers(room.getUsers())
+        let game = room.getGame();
+        let user = room.getUsers()[uuid];
+        console.log(room.getUsers())
 
-        updateUserList(game.getUsers())
+        updatePlayerList(game, room.getUsers())
+        setPlayerColor(user.getInfo().color)
     })
+
 
     //TODO: Event listener start game button
     //socket.emit('start_game', );
 })
-
-
-
-
-
-
-function updateUserList(users) {
-    document.querySelector('.players-list').innerHTML = "";
-    for (const key in users) {
-        document.querySelector('.players-list').innerHTML += `
-            <div class="player_box color-yellow">
-                <div class="player-picture">
-                    <img src="${users[key].avatar}" alt="Image du joueur">
-                    <div class="points-won hidden">
-                        <p>Icarudazdazdazda</p>
-                        <div class="add-point">
-                            <p>+</p>
-                            <p>56</p>
-                        </div>
-                    </div>
-                </div>
-    
-                <div class="player-infos">
-                    <p class="player-name">${users[key].name}</p>
-    
-                    <div class="player-score">
-                        <p class="player-points-count">0</p>
-                        <p class="player-points-title">pts</p>
-                    </div>
-                </div>
-            </div>
-            `
-    }
-}

@@ -1,4 +1,4 @@
-const {setCookie} = require('../functions')
+const {setCookie, genRandomAvatar} = require('../functions')
 const {io} = require("socket.io-client");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
     const code = location.search.slice(1);
+
+    const randomAvatar = document.getElementById('random_avatar');
+    randomAvatar.addEventListener('click', () => {
+        const new_avatar = genRandomAvatar();
+
+        document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
+    });
+
 
     const joinRoomForm = document.getElementById('join_room');
     joinRoomForm.addEventListener('submit', (e) => {

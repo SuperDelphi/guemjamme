@@ -72,10 +72,10 @@
 .color-brown .player-picture{
     background-color: var(--color_player_brown);
 }
-.color-dark-pink .player-picture{
+.color-purple .player-picture{
     background-color: var(--color_player_dark_pink);
 }
-.color-light-pink .player-picture{
+.color-pink .player-picture{
     background-color: var(--color_player_light_pink);
 }
 
@@ -87,22 +87,19 @@
 .color-yellow .player-picture img{
     border: solid 3px var(--color_player_yellow);
 }
-
 .color-blue .player-picture img{
     border: solid 3px var(--color_player_blue);
 }
-
 .color-green .player-picture img{
     border: solid 3px var(--color_player_green);
 }
-
 .color-brown .player-picture img{
     border: solid 3px var(--color_player_brown);
 }
-.color-dark-pink .player-picture img{
+.color-purple .player-picture img{
     border: solid 3px var(--color_player_dark_pink);
 }
-.color-light-pink .player-picture img{
+.color-pink .player-picture img{
     border: solid 3px var(--color_player_light_pink);
 }
 

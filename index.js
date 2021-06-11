@@ -11,6 +11,9 @@ const User = require('./js/classe/User');
 const Room = require('./js/classe/Room');
 const Game = require('./js/classe/Game');
 
+const RoomFactory = require('./js/factories/RoomFactory');
+const RF = new RoomFactory();
+
 const { roomCode, codeExists} = require('./js/functions');
 
 global.rooms = {}
@@ -59,19 +62,46 @@ io.on('connection', socket => {
         room.setGame(game)
 
         global.rooms[code] = room;
-        socket.join(code)
-        console.log(room)
-        io.sockets.in(code).emit('success_host_room', code, uuid)
+        socket.join(code);
+        socket.emit('success_host_room', code, uuid);
     });
 
     /**
      * Lorsqu'un client arrive sur la page /game de ssa room
      */
     socket.on('join', (code, uuid) => {
-        console.log(code, global.rooms[code])
-        socket.join(code)
+        const game = global.rooms[code].getGame();
+        game.addUser(uuid);
+
+        console.log(game)
+
+        global.rooms[code].setGame(game)
+
+        socket.join(code);
         io.sockets.in(code).emit('new_join', global.rooms[code]);
     })
+
+    socket.on('update_room', (code, room) => {
+        const pre_room = global.rooms[code];
+        const new_room = RF.getFromSocket(room);
+
+        console.log(pre_room.users)
+
+        pre_room.setPreferences(new_room.getPreferences());
+
+        const pre_game = pre_room.getGame();
+        const new_game = new_room.getGame();
+
+        for (const key in new_game.getUsers()) {
+            if (pre_game.hasOwnProperty(key)) return;
+            pre_game.addUser(key, new_game.getUserGameStats(key));
+        }
+
+        console.log(pre_room.users)
+
+        socket.join(code);
+        io.sockets.in(code).emit('updated_room', global.rooms[code]);
+    });
 
     /**
      * Demande d'un client pour verifier l'existence d'une room
@@ -85,7 +115,7 @@ io.on('connection', socket => {
         global.rooms[code].addUser(newUser);
 
         socket.join(code);
-        io.sockets.in(code).emit('room_exist', code, uuid);
+        socket.emit('room_exist', code, uuid);
     })
 });
 

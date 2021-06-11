@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const roomCode = () => {
     let code = "";
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
@@ -35,4 +37,9 @@ function getCookie(name) {
     return null;
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie };
+const genRandomAvatar = () => {
+    const rand = Math.floor(Math.random()*(18-1)+1)
+    return `avatar_${rand}.png`
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };

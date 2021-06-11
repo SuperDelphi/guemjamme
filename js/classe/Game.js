@@ -1,3 +1,5 @@
+const GameStats = require('./GameStats');
+
 const Status = {
     WAITING: 1,
     PLAYING: 0,
@@ -42,6 +44,14 @@ class Game {
 
     getUsers = () => {
         return this.users;
+    }
+
+    getUserGameStats = (uuid) => {
+        return this.users[uuid];
+    }
+
+    addUser = (uuid, gameStat = new GameStats()) => {
+        this.users[uuid] = gameStat;
     }
 
     setUsers = (users) => {

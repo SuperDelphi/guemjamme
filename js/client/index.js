@@ -3,10 +3,17 @@ const {io} = require('socket.io-client')
 const UserFactory = require("../factories/UserFactory");
 const User = require('../classe/User')
 
-const{ setCookie, getCookie } = require('../functions');
+const{ setCookie, genRandomAvatar } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
+
+    const randomAvatar = document.getElementById('random_avatar');
+    randomAvatar.addEventListener('click', () => {
+        const new_avatar = genRandomAvatar();
+
+        document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
+    });
 
     const createRoomForm = document.getElementById('create_room')
     createRoomForm.addEventListener('submit', (e) => {
