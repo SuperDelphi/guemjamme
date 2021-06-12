@@ -27,7 +27,7 @@ Creation music:
 
 
 Lorem Ipsum API
-https://baconipsum.com/api/?type=meat-and-filler&paras=5&format=text
+https://baconipsum.com/api/?type=all-meat&paras=1&format=json
 
 Parameters:
     - type: all-meat for meat only or meat-and-filler for meat mixed with miscellaneous ‘lorem ipsum’ filler.

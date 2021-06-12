@@ -1,6 +1,12 @@
 const {getCookie} = require('../functions');
 const {io} = require("socket.io-client");
-const {updatePlayerList, setPlayerColor} = require("./views/game_views");
+const {
+    updatePlayerList,
+    setPlayerColor,
+    setTimer,
+    setNumberPlayer,
+    setPoints
+} = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
 const RF = new RoomFactory();
@@ -29,10 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let game = room.getGame();
         let user = room.getUsers()[uuid];
-        console.log(room.getUsers())
+        let userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        setPlayerColor(user.getInfo().color)
+
+        setTimer(game.getTimeLeftFormated())
+        setNumberPlayer(game.getNbPlayer())
+        setPoints(userGS.getScore())
     })
 
 

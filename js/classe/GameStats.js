@@ -30,6 +30,14 @@ class GameStats {
     addMultiplier = (coeff) => {
         this.multiplier += coeff;
     }
+
+    setScore = (score) => {
+        this.score = score;
+    }
+
+    setMultiplier = (multiplier) => {
+        this.multiplier = multiplier;
+    }
 }
 
 module.exports = GameStats;

@@ -3,13 +3,29 @@ const updatePlayerList = (game, users) => {
 
     playerList.innerHTML = "";
 
+    console.log(users)
+    let sortable = [];
     for (const key in users) {
-
-        const name = users[key].getName();
-        const color = users[key].getInfo().color;
-        const avatar = users[key].getInfo().avatar;
         const gameStat = game.getUserGameStats(key);
-        console.log(key, gameStat, game)
+        sortable.push([users[key], gameStat.getScore()]);
+    }
+
+    console.log(sortable)
+
+    sortable[1][1] = 54
+
+    sortable.sort((a,b) => {
+        return a[1] - b[1];
+    });
+
+    sortable.forEach(user => {
+
+        const name = user[0].getName();
+        const color = user[0].getInfo().color;
+        const avatar = user[0].getInfo().avatar;
+        const gameStat = game.getUserGameStats(user[0].getUUID());
+
+        //console.log(gameStat.getScore(), gameStat.getMultiplier())
 
         playerList.innerHTML += `
             <div class="player_box color-${color}">
@@ -28,18 +44,38 @@ const updatePlayerList = (game, users) => {
                     <p class="player-name">${name}</p>
         
                     <div class="player-score">
-                        <p class="player-points-count">${0}</p>
+                        <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
                         <p class="player-points-title">pts</p>
                     </div>
                 </div>
             </div>
         `
-    }
+    });
 }
 
 function setPlayerColor(color) {
 
 }
 
+function setTimer(time) {
+    const timer = document.getElementById('timer');
+    timer.innerHTML = `<span class="bold">Temps restant : </span> ${time}`;
+}
 
-module.exports = { updatePlayerList, setPlayerColor }
+function setNumberPlayer(nb) {
+    const nbPlayer = document.getElementById('nb-player');
+    nbPlayer.innerHTML = `<span class="bold">Nombre de joueurs : </span>${nb}`;
+}
+
+function setPoints(points) {
+    const inputPoints = document.getElementById('input-points');
+    inputPoints.innerText = points;
+}
+
+module.exports = {
+    updatePlayerList,
+    setPlayerColor,
+    setTimer,
+    setNumberPlayer,
+    setPoints
+}

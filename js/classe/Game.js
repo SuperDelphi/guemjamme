@@ -46,6 +46,10 @@ class Game {
         return this.users;
     }
 
+    getNbPlayer = () => {
+        return Object.keys(this.users).length;
+    }
+
     getUserGameStats = (uuid) => {
         return this.users[uuid];
     }
@@ -56,6 +60,20 @@ class Game {
 
     setUsers = (users) => {
         this.users = users;
+    }
+
+    getTimeLeft = () => {
+        return this.timeleft;
+    }
+
+    getTimeLeftFormated = () => {
+        let seconds = Math.floor((this.timeleft / 1000) % 60);
+        let minutes = Math.floor((this.timeleft / (1000 * 60)) % 60);
+
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        return `${minutes}:${seconds}`
     }
 }
 

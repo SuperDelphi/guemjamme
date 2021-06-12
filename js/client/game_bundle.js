@@ -1,4 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+
+},{}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -150,7 +152,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -1931,7 +1933,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":1,"buffer":2,"ieee754":3}],3:[function(require,module,exports){
+},{"base64-js":2,"buffer":3,"ieee754":4}],4:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -2018,7 +2020,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2204,7 +2206,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 const GameStats = require('./GameStats');
 
 const Status = {
@@ -2253,6 +2255,10 @@ class Game {
         return this.users;
     }
 
+    getNbPlayer = () => {
+        return Object.keys(this.users).length;
+    }
+
     getUserGameStats = (uuid) => {
         return this.users[uuid];
     }
@@ -2264,10 +2270,24 @@ class Game {
     setUsers = (users) => {
         this.users = users;
     }
+
+    getTimeLeft = () => {
+        return this.timeleft;
+    }
+
+    getTimeLeftFormated = () => {
+        let seconds = Math.floor((this.timeleft / 1000) % 60);
+        let minutes = Math.floor((this.timeleft / (1000 * 60)) % 60);
+
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        return `${minutes}:${seconds}`
+    }
 }
 
 module.exports = Game;
-},{"./GameStats":6}],6:[function(require,module,exports){
+},{"./GameStats":7}],7:[function(require,module,exports){
 class GameStats {
     score
     multiplier
@@ -2300,10 +2320,18 @@ class GameStats {
     addMultiplier = (coeff) => {
         this.multiplier += coeff;
     }
+
+    setScore = (score) => {
+        this.score = score;
+    }
+
+    setMultiplier = (multiplier) => {
+        this.multiplier = multiplier;
+    }
 }
 
 module.exports = GameStats;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 class Room {
     code
     owner
@@ -2366,7 +2394,7 @@ class Room {
 if (module) {
     module.exports = Room;
 }
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 class User {
     uuid
     name
@@ -2399,10 +2427,16 @@ class User {
 }
 module.exports = User
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 const {getCookie} = require('../functions');
 const {io} = require("socket.io-client");
-const {updatePlayerList} = require("./views/game_views");
+const {
+    updatePlayerList,
+    setPlayerColor,
+    setTimer,
+    setNumberPlayer,
+    setPoints
+} = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
 const RF = new RoomFactory();
@@ -2426,33 +2460,53 @@ document.addEventListener('DOMContentLoaded', () => {
     * le serven envoie un event new_join avec les nouvelles infos sur la room
     * Ces infos permettent de mettre a jours la liste des joueurs
     */
-    socket.on('new_join', (uuid, serial_room) => {
+    socket.on('new_join', (serial_room) => {
         let room = RF.getFromSocket(serial_room)
 
         let game = room.getGame();
         let user = room.getUsers()[uuid];
-        console.log(room.getUsers())
+        let userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
+
+        setTimer(game.getTimeLeftFormated())
+        setNumberPlayer(game.getNbPlayer())
+        setPoints(userGS.getScore())
     })
 
 
     //TODO: Event listener start game button
     //socket.emit('start_game', );
 })
-},{"../factories/RoomFactory":12,"../functions":14,"./views/game_views":10,"socket.io-client":40}],10:[function(require,module,exports){
+},{"../factories/RoomFactory":14,"../functions":16,"./views/game_views":11,"socket.io-client":42}],11:[function(require,module,exports){
 const updatePlayerList = (game, users) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
 
+    console.log(users)
+    let sortable = [];
     for (const key in users) {
-
-        const name = users[key].getName();
-        const color = users[key].getInfo().color;
-        const avatar = users[key].getInfo().avatar;
         const gameStat = game.getUserGameStats(key);
-        console.log(key, gameStat, game)
+        sortable.push([users[key], gameStat.getScore()]);
+    }
+
+    console.log(sortable)
+
+    sortable[1][1] = 54
+
+    sortable.sort((a,b) => {
+        return a[1] - b[1];
+    });
+
+    sortable.forEach(user => {
+
+        const name = user[0].getName();
+        const color = user[0].getInfo().color;
+        const avatar = user[0].getInfo().avatar;
+        const gameStat = game.getUserGameStats(user[0].getUUID());
+
+        //console.log(gameStat.getScore(), gameStat.getMultiplier())
 
         playerList.innerHTML += `
             <div class="player_box color-${color}">
@@ -2471,19 +2525,46 @@ const updatePlayerList = (game, users) => {
                     <p class="player-name">${name}</p>
         
                     <div class="player-score">
-                        <p class="player-points-count">${0}</p>
+                        <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
                         <p class="player-points-title">pts</p>
                     </div>
                 </div>
             </div>
         `
-    }
+    });
 }
 
+function setPlayerColor(color) {
 
-module.exports = { updatePlayerList }
-},{}],11:[function(require,module,exports){
+}
+
+function setTimer(time) {
+    const timer = document.getElementById('timer');
+    timer.innerHTML = `<span class="bold">Temps restant : </span> ${time}`;
+}
+
+function setNumberPlayer(nb) {
+    const nbPlayer = document.getElementById('nb-player');
+    nbPlayer.innerHTML = `<span class="bold">Nombre de joueurs : </span>${nb}`;
+}
+
+function setPoints(points) {
+    const inputPoints = document.getElementById('input-points');
+    inputPoints.innerText = points;
+}
+
+module.exports = {
+    updatePlayerList,
+    setPlayerColor,
+    setTimer,
+    setNumberPlayer,
+    setPoints
+}
+},{}],12:[function(require,module,exports){
 const Game = require('../classe/Game');
+
+const GameStatsFactory = require('./GameStatsFactory');
+const GSF = new GameStatsFactory();
 
 class GameFactory {
     getFromSocket = game => {
@@ -2493,13 +2574,28 @@ class GameFactory {
             game.wordAmount
         );
 
-        g.setUsers(game.users);
+        for (const k in game.users) {
+            g.addUser(k, GSF.getFromSocket(game.users[k]));
+        }
         return g;
     }
 }
 
 module.exports = GameFactory;
-},{"../classe/Game":5}],12:[function(require,module,exports){
+},{"../classe/Game":6,"./GameStatsFactory":13}],13:[function(require,module,exports){
+const GameStats = require('../classe/GameStats');
+
+class GameStatsFactory {
+    getFromSocket = gameStat => {
+        const gs = new GameStats();
+        gs.setScore(gameStat.score);
+        gs.setMultiplier(gameStat.multiplier);
+        return gs;
+    }
+}
+
+module.exports = GameStatsFactory;
+},{"../classe/GameStats":7}],14:[function(require,module,exports){
 const Room = require("../classe/Room");
 
 const UserFactory = require('./UserFactory');
@@ -2528,11 +2624,12 @@ class RoomFactory {
 }
 
 module.exports = RoomFactory;
-},{"../classe/Room":7,"./GameFactory":11,"./UserFactory":13}],13:[function(require,module,exports){
+},{"../classe/Room":8,"./GameFactory":12,"./UserFactory":15}],15:[function(require,module,exports){
 const User = require("../classe/User");
 
 class UserFactory {
     getFromSocket = user => {
+        console.log(user)
         return new User(
             user.uuid,
             user.name,
@@ -2543,8 +2640,10 @@ class UserFactory {
 }
 
 module.exports = UserFactory
-},{"../classe/User":8}],14:[function(require,module,exports){
+},{"../classe/User":9}],16:[function(require,module,exports){
 (function (global){(function (){
+const fs = require('fs');
+
 const roomCode = () => {
     let code = "";
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
@@ -2582,9 +2681,14 @@ function getCookie(name) {
     return null;
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie };
+const genRandomAvatar = () => {
+    const rand = Math.floor(Math.random()*(18-1)+1)
+    return `avatar_${rand}.png`
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],15:[function(require,module,exports){
+},{"fs":1}],17:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -2671,7 +2775,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -2732,7 +2836,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -2909,7 +3013,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -3182,7 +3286,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":19,"_process":4}],19:[function(require,module,exports){
+},{"./common":21,"_process":5}],21:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3445,7 +3549,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":37}],20:[function(require,module,exports){
+},{"ms":39}],22:[function(require,module,exports){
 module.exports = (() => {
   if (typeof self !== "undefined") {
     return self;
@@ -3456,7 +3560,7 @@ module.exports = (() => {
   }
 })();
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 const Socket = require("./socket");
 
 module.exports = (uri, opts) => new Socket(uri, opts);
@@ -3472,7 +3576,7 @@ module.exports.Transport = require("./transport");
 module.exports.transports = require("./transports/index");
 module.exports.parser = require("engine.io-parser");
 
-},{"./socket":22,"./transport":23,"./transports/index":24,"engine.io-parser":35}],22:[function(require,module,exports){
+},{"./socket":24,"./transport":25,"./transports/index":26,"engine.io-parser":37}],24:[function(require,module,exports){
 const transports = require("./transports/index");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:socket");
@@ -4156,7 +4260,7 @@ function clone(obj) {
 
 module.exports = Socket;
 
-},{"./transports/index":24,"component-emitter":17,"debug":18,"engine.io-parser":35,"parseqs":38,"parseuri":39}],23:[function(require,module,exports){
+},{"./transports/index":26,"component-emitter":19,"debug":20,"engine.io-parser":37,"parseqs":40,"parseuri":41}],25:[function(require,module,exports){
 const parser = require("engine.io-parser");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:transport");
@@ -4277,7 +4381,7 @@ class Transport extends Emitter {
 
 module.exports = Transport;
 
-},{"component-emitter":17,"debug":18,"engine.io-parser":35}],24:[function(require,module,exports){
+},{"component-emitter":19,"debug":20,"engine.io-parser":37}],26:[function(require,module,exports){
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
 const XHR = require("./polling-xhr");
 const JSONP = require("./polling-jsonp");
@@ -4324,7 +4428,7 @@ function polling(opts) {
   }
 }
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":31,"./polling-jsonp":25,"./polling-xhr":26,"./websocket":29}],25:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":33,"./polling-jsonp":27,"./polling-xhr":28,"./websocket":31}],27:[function(require,module,exports){
 const Polling = require("./polling");
 const globalThis = require("../globalThis");
 
@@ -4521,7 +4625,7 @@ class JSONPPolling extends Polling {
 
 module.exports = JSONPPolling;
 
-},{"../globalThis":20,"./polling":27}],26:[function(require,module,exports){
+},{"../globalThis":22,"./polling":29}],28:[function(require,module,exports){
 /* global attachEvent */
 
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
@@ -4855,7 +4959,7 @@ function unloadHandler() {
 module.exports = XHR;
 module.exports.Request = Request;
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":31,"../globalThis":20,"../util":30,"./polling":27,"component-emitter":17,"debug":18}],27:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":33,"../globalThis":22,"../util":32,"./polling":29,"component-emitter":19,"debug":20}],29:[function(require,module,exports){
 const Transport = require("../transport");
 const parseqs = require("parseqs");
 const parser = require("engine.io-parser");
@@ -5062,7 +5166,7 @@ class Polling extends Transport {
 
 module.exports = Polling;
 
-},{"../transport":23,"debug":18,"engine.io-parser":35,"parseqs":38,"yeast":49}],28:[function(require,module,exports){
+},{"../transport":25,"debug":20,"engine.io-parser":37,"parseqs":40,"yeast":51}],30:[function(require,module,exports){
 const globalThis = require("../globalThis");
 
 module.exports = {
@@ -5071,7 +5175,7 @@ module.exports = {
   defaultBinaryType: "arraybuffer"
 };
 
-},{"../globalThis":20}],29:[function(require,module,exports){
+},{"../globalThis":22}],31:[function(require,module,exports){
 (function (Buffer){(function (){
 const Transport = require("../transport");
 const parser = require("engine.io-parser");
@@ -5330,7 +5434,7 @@ class WS extends Transport {
 module.exports = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../transport":23,"../util":30,"./websocket-constructor":28,"buffer":2,"debug":18,"engine.io-parser":35,"parseqs":38,"yeast":49}],30:[function(require,module,exports){
+},{"../transport":25,"../util":32,"./websocket-constructor":30,"buffer":3,"debug":20,"engine.io-parser":37,"parseqs":40,"yeast":51}],32:[function(require,module,exports){
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
     if (obj.hasOwnProperty(k)) {
@@ -5340,7 +5444,7 @@ module.exports.pick = (obj, ...attr) => {
   }, {});
 };
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 
 const hasCORS = require("has-cors");
@@ -5382,7 +5486,7 @@ module.exports = function(opts) {
   }
 };
 
-},{"./globalThis":20,"has-cors":36}],32:[function(require,module,exports){
+},{"./globalThis":22,"has-cors":38}],34:[function(require,module,exports){
 const PACKET_TYPES = Object.create(null); // no Map = no polyfill
 PACKET_TYPES["open"] = "0";
 PACKET_TYPES["close"] = "1";
@@ -5405,7 +5509,7 @@ module.exports = {
   ERROR_PACKET
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 const { PACKET_TYPES_REVERSE, ERROR_PACKET } = require("./commons");
 
 const withNativeArrayBuffer = typeof ArrayBuffer === "function";
@@ -5464,7 +5568,7 @@ const mapBinary = (data, binaryType) => {
 
 module.exports = decodePacket;
 
-},{"./commons":32,"base64-arraybuffer":16}],34:[function(require,module,exports){
+},{"./commons":34,"base64-arraybuffer":18}],36:[function(require,module,exports){
 const { PACKET_TYPES } = require("./commons");
 
 const withNativeBlob =
@@ -5512,7 +5616,7 @@ const encodeBlobAsBase64 = (data, callback) => {
 
 module.exports = encodePacket;
 
-},{"./commons":32}],35:[function(require,module,exports){
+},{"./commons":34}],37:[function(require,module,exports){
 const encodePacket = require("./encodePacket");
 const decodePacket = require("./decodePacket");
 
@@ -5556,7 +5660,7 @@ module.exports = {
   decodePayload
 };
 
-},{"./decodePacket":33,"./encodePacket":34}],36:[function(require,module,exports){
+},{"./decodePacket":35,"./encodePacket":36}],38:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -5575,7 +5679,7 @@ try {
   module.exports = false;
 }
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -5739,7 +5843,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -5778,7 +5882,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5848,7 +5952,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = exports.Socket = exports.Manager = exports.protocol = void 0;
@@ -5921,7 +6025,7 @@ var socket_1 = require("./socket");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_1.Socket; } });
 exports.default = lookup;
 
-},{"./manager":41,"./socket":43,"./url":45,"debug":18,"socket.io-parser":47}],41:[function(require,module,exports){
+},{"./manager":43,"./socket":45,"./url":47,"debug":20,"socket.io-parser":49}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Manager = void 0;
@@ -6298,7 +6402,7 @@ class Manager extends typed_events_1.StrictEventEmitter {
 }
 exports.Manager = Manager;
 
-},{"./on":42,"./socket":43,"./typed-events":44,"backo2":15,"debug":18,"engine.io-client":21,"socket.io-parser":47}],42:[function(require,module,exports){
+},{"./on":44,"./socket":45,"./typed-events":46,"backo2":17,"debug":20,"engine.io-client":23,"socket.io-parser":49}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -6310,7 +6414,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = void 0;
@@ -6772,7 +6876,7 @@ class Socket extends typed_events_1.StrictEventEmitter {
 }
 exports.Socket = Socket;
 
-},{"./on":42,"./typed-events":44,"debug":18,"socket.io-parser":47}],44:[function(require,module,exports){
+},{"./on":44,"./typed-events":46,"debug":20,"socket.io-parser":49}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StrictEventEmitter = void 0;
@@ -6846,7 +6950,7 @@ class StrictEventEmitter extends Emitter {
 }
 exports.StrictEventEmitter = StrictEventEmitter;
 
-},{"component-emitter":17}],45:[function(require,module,exports){
+},{"component-emitter":19}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.url = void 0;
@@ -6914,7 +7018,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":18,"parseuri":39}],46:[function(require,module,exports){
+},{"debug":20,"parseuri":41}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -6996,7 +7100,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary":48}],47:[function(require,module,exports){
+},{"./is-binary":50}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -7278,7 +7382,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary":46,"./is-binary":48,"component-emitter":17,"debug":18}],48:[function(require,module,exports){
+},{"./binary":48,"./is-binary":50,"component-emitter":19,"debug":20}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -7335,7 +7439,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -7405,4 +7509,4 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}]},{},[9]);
+},{}]},{},[10]);
