@@ -16,6 +16,10 @@ const codeExists = (code) => {
     return false;
 }
 
+const capitalize = (str) => {
+    return str.replace(/^\w/, c => {return c.toUpperCase()});
+}
+
 function setCookie(name, value, days) {
     let expires = "";
     if (days) {
@@ -42,4 +46,11 @@ const genRandomAvatar = () => {
     return `avatar_${rand}.png`
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };
+const randomPseudo = () => {
+    const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
+    const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
+
+    return `${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}${capitalize(adverbs[Math.floor(Math.random() * adverbs.length)])}`;
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };

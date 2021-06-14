@@ -2207,56 +2207,29 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],6:[function(require,module,exports){
-class User {
-    uuid
-    name
-    color
-    avatar
-
-    constructor(uuid, name, color, avatar) {
-        this.uuid = uuid;
-        this.name = name;
-        this.color = color;
-        this.avatar = avatar;
-    }
-
-    getUUID = () => {
-        return this.uuid;
-    }
-
-    getName = () => {
-        return this.name;
-    }
-
-    getInfo = () => {
-        return {color: this.color, avatar: this.avatar};
-    }
-
-    setInfo = (color, avatar) => {
-        this.color = color;
-        this.avatar = avatar;
-    }
-}
-module.exports = User
-
-},{}],7:[function(require,module,exports){
+const {} = require('../functions')
+const {setDefaultPseudo} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
-const UserFactory = require("../factories/UserFactory");
-const User = require('../classe/User')
-
-const{ setCookie, genRandomAvatar } = require('../functions');
+const{ setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
+    setDefaultPseudo(randomPseudo())
+
+    let new_avatar = genRandomAvatar();
+    document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
+    /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
-        const new_avatar = genRandomAvatar();
-
+        new_avatar = genRandomAvatar();
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
+    /**
+     * Lorsque le client envoie le formulaire pour créer la room
+     */
     const createRoomForm = document.getElementById('create_room')
     createRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -2268,6 +2241,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
 
+        /**
+         * Par défault le créateur de la room est en jaune (sans doute le passer coté serveur pour éviter les soucis)
+         * Les préférences par défault sont :
+         *      - 60s
+         *      - 5w
+         */
         const color = 'yellow';
         const preferences = {gameDuration, wordAmount};
 
@@ -2289,28 +2268,20 @@ document.addEventListener('DOMContentLoaded', () => {
         setCookie("uuid", uuid, 1);
         setCookie("code", code, 1);
 
-
-        //socket.emit('new_user_join', code, serial_room);
         window.location.replace("/game");
     });
 
 });
-},{"../classe/User":6,"../factories/UserFactory":8,"../functions":9,"socket.io-client":35}],8:[function(require,module,exports){
-const User = require("../classe/User");
-
-class UserFactory {
-    getFromSocket = user => {
-        return new User(
-            user.uuid,
-            user.name,
-            user.color,
-            user.avatar
-        );
-    }
+},{"../client/views/index_views":7,"../functions":8,"socket.io-client":34}],7:[function(require,module,exports){
+function setDefaultPseudo(pseudo) {
+    const name = document.getElementById('name')
+    name.setAttribute('value', pseudo);
 }
 
-module.exports = UserFactory
-},{"../classe/User":6}],9:[function(require,module,exports){
+module.exports = {
+    setDefaultPseudo
+}
+},{}],8:[function(require,module,exports){
 (function (global){(function (){
 const fs = require('fs');
 
@@ -2328,6 +2299,10 @@ const codeExists = (code) => {
         if (key === code) return true;
     }
     return false;
+}
+
+const capitalize = (str) => {
+    return str.replace(/^\w/, c => {return c.toUpperCase()});
 }
 
 function setCookie(name, value, days) {
@@ -2356,9 +2331,16 @@ const genRandomAvatar = () => {
     return `avatar_${rand}.png`
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };
+const randomPseudo = () => {
+    const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
+    const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
+
+    return `${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}${capitalize(adverbs[Math.floor(Math.random() * adverbs.length)])}`;
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"fs":1}],10:[function(require,module,exports){
+},{"fs":1}],9:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -2445,7 +2427,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -2506,7 +2488,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -2683,7 +2665,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -2956,7 +2938,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":14,"_process":5}],14:[function(require,module,exports){
+},{"./common":13,"_process":5}],13:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3219,7 +3201,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":32}],15:[function(require,module,exports){
+},{"ms":31}],14:[function(require,module,exports){
 module.exports = (() => {
   if (typeof self !== "undefined") {
     return self;
@@ -3230,7 +3212,7 @@ module.exports = (() => {
   }
 })();
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 const Socket = require("./socket");
 
 module.exports = (uri, opts) => new Socket(uri, opts);
@@ -3246,7 +3228,7 @@ module.exports.Transport = require("./transport");
 module.exports.transports = require("./transports/index");
 module.exports.parser = require("engine.io-parser");
 
-},{"./socket":17,"./transport":18,"./transports/index":19,"engine.io-parser":30}],17:[function(require,module,exports){
+},{"./socket":16,"./transport":17,"./transports/index":18,"engine.io-parser":29}],16:[function(require,module,exports){
 const transports = require("./transports/index");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:socket");
@@ -3930,7 +3912,7 @@ function clone(obj) {
 
 module.exports = Socket;
 
-},{"./transports/index":19,"component-emitter":12,"debug":13,"engine.io-parser":30,"parseqs":33,"parseuri":34}],18:[function(require,module,exports){
+},{"./transports/index":18,"component-emitter":11,"debug":12,"engine.io-parser":29,"parseqs":32,"parseuri":33}],17:[function(require,module,exports){
 const parser = require("engine.io-parser");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:transport");
@@ -4051,7 +4033,7 @@ class Transport extends Emitter {
 
 module.exports = Transport;
 
-},{"component-emitter":12,"debug":13,"engine.io-parser":30}],19:[function(require,module,exports){
+},{"component-emitter":11,"debug":12,"engine.io-parser":29}],18:[function(require,module,exports){
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
 const XHR = require("./polling-xhr");
 const JSONP = require("./polling-jsonp");
@@ -4098,7 +4080,7 @@ function polling(opts) {
   }
 }
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":26,"./polling-jsonp":20,"./polling-xhr":21,"./websocket":24}],20:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":25,"./polling-jsonp":19,"./polling-xhr":20,"./websocket":23}],19:[function(require,module,exports){
 const Polling = require("./polling");
 const globalThis = require("../globalThis");
 
@@ -4295,7 +4277,7 @@ class JSONPPolling extends Polling {
 
 module.exports = JSONPPolling;
 
-},{"../globalThis":15,"./polling":22}],21:[function(require,module,exports){
+},{"../globalThis":14,"./polling":21}],20:[function(require,module,exports){
 /* global attachEvent */
 
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
@@ -4629,7 +4611,7 @@ function unloadHandler() {
 module.exports = XHR;
 module.exports.Request = Request;
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":26,"../globalThis":15,"../util":25,"./polling":22,"component-emitter":12,"debug":13}],22:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":25,"../globalThis":14,"../util":24,"./polling":21,"component-emitter":11,"debug":12}],21:[function(require,module,exports){
 const Transport = require("../transport");
 const parseqs = require("parseqs");
 const parser = require("engine.io-parser");
@@ -4836,7 +4818,7 @@ class Polling extends Transport {
 
 module.exports = Polling;
 
-},{"../transport":18,"debug":13,"engine.io-parser":30,"parseqs":33,"yeast":44}],23:[function(require,module,exports){
+},{"../transport":17,"debug":12,"engine.io-parser":29,"parseqs":32,"yeast":43}],22:[function(require,module,exports){
 const globalThis = require("../globalThis");
 
 module.exports = {
@@ -4845,7 +4827,7 @@ module.exports = {
   defaultBinaryType: "arraybuffer"
 };
 
-},{"../globalThis":15}],24:[function(require,module,exports){
+},{"../globalThis":14}],23:[function(require,module,exports){
 (function (Buffer){(function (){
 const Transport = require("../transport");
 const parser = require("engine.io-parser");
@@ -5104,7 +5086,7 @@ class WS extends Transport {
 module.exports = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../transport":18,"../util":25,"./websocket-constructor":23,"buffer":3,"debug":13,"engine.io-parser":30,"parseqs":33,"yeast":44}],25:[function(require,module,exports){
+},{"../transport":17,"../util":24,"./websocket-constructor":22,"buffer":3,"debug":12,"engine.io-parser":29,"parseqs":32,"yeast":43}],24:[function(require,module,exports){
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
     if (obj.hasOwnProperty(k)) {
@@ -5114,7 +5096,7 @@ module.exports.pick = (obj, ...attr) => {
   }, {});
 };
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 
 const hasCORS = require("has-cors");
@@ -5156,7 +5138,7 @@ module.exports = function(opts) {
   }
 };
 
-},{"./globalThis":15,"has-cors":31}],27:[function(require,module,exports){
+},{"./globalThis":14,"has-cors":30}],26:[function(require,module,exports){
 const PACKET_TYPES = Object.create(null); // no Map = no polyfill
 PACKET_TYPES["open"] = "0";
 PACKET_TYPES["close"] = "1";
@@ -5179,7 +5161,7 @@ module.exports = {
   ERROR_PACKET
 };
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 const { PACKET_TYPES_REVERSE, ERROR_PACKET } = require("./commons");
 
 const withNativeArrayBuffer = typeof ArrayBuffer === "function";
@@ -5238,7 +5220,7 @@ const mapBinary = (data, binaryType) => {
 
 module.exports = decodePacket;
 
-},{"./commons":27,"base64-arraybuffer":11}],29:[function(require,module,exports){
+},{"./commons":26,"base64-arraybuffer":10}],28:[function(require,module,exports){
 const { PACKET_TYPES } = require("./commons");
 
 const withNativeBlob =
@@ -5286,7 +5268,7 @@ const encodeBlobAsBase64 = (data, callback) => {
 
 module.exports = encodePacket;
 
-},{"./commons":27}],30:[function(require,module,exports){
+},{"./commons":26}],29:[function(require,module,exports){
 const encodePacket = require("./encodePacket");
 const decodePacket = require("./decodePacket");
 
@@ -5330,7 +5312,7 @@ module.exports = {
   decodePayload
 };
 
-},{"./decodePacket":28,"./encodePacket":29}],31:[function(require,module,exports){
+},{"./decodePacket":27,"./encodePacket":28}],30:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -5349,7 +5331,7 @@ try {
   module.exports = false;
 }
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -5513,7 +5495,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -5552,7 +5534,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5622,7 +5604,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = exports.Socket = exports.Manager = exports.protocol = void 0;
@@ -5695,7 +5677,7 @@ var socket_1 = require("./socket");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_1.Socket; } });
 exports.default = lookup;
 
-},{"./manager":36,"./socket":38,"./url":40,"debug":13,"socket.io-parser":42}],36:[function(require,module,exports){
+},{"./manager":35,"./socket":37,"./url":39,"debug":12,"socket.io-parser":41}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Manager = void 0;
@@ -6072,7 +6054,7 @@ class Manager extends typed_events_1.StrictEventEmitter {
 }
 exports.Manager = Manager;
 
-},{"./on":37,"./socket":38,"./typed-events":39,"backo2":10,"debug":13,"engine.io-client":16,"socket.io-parser":42}],37:[function(require,module,exports){
+},{"./on":36,"./socket":37,"./typed-events":38,"backo2":9,"debug":12,"engine.io-client":15,"socket.io-parser":41}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -6084,7 +6066,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = void 0;
@@ -6546,7 +6528,7 @@ class Socket extends typed_events_1.StrictEventEmitter {
 }
 exports.Socket = Socket;
 
-},{"./on":37,"./typed-events":39,"debug":13,"socket.io-parser":42}],39:[function(require,module,exports){
+},{"./on":36,"./typed-events":38,"debug":12,"socket.io-parser":41}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StrictEventEmitter = void 0;
@@ -6620,7 +6602,7 @@ class StrictEventEmitter extends Emitter {
 }
 exports.StrictEventEmitter = StrictEventEmitter;
 
-},{"component-emitter":12}],40:[function(require,module,exports){
+},{"component-emitter":11}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.url = void 0;
@@ -6688,7 +6670,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":13,"parseuri":34}],41:[function(require,module,exports){
+},{"debug":12,"parseuri":33}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -6770,7 +6752,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary":43}],42:[function(require,module,exports){
+},{"./is-binary":42}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -7052,7 +7034,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary":41,"./is-binary":43,"component-emitter":12,"debug":13}],43:[function(require,module,exports){
+},{"./binary":40,"./is-binary":42,"component-emitter":11,"debug":12}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -7109,7 +7091,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -7179,4 +7161,4 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}]},{},[7]);
+},{}]},{},[6]);

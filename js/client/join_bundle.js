@@ -2207,8 +2207,8 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],6:[function(require,module,exports){
-const {setCookie, genRandomAvatar} = require('../functions')
-const {setColor} = require('../client/views/join_views');
+const {setCookie, genRandomAvatar, randomPseudo} = require('../functions')
+const {setColor, setDefaultPseudo} = require('../client/views/join_views');
 const {io} = require("socket.io-client");
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2217,11 +2217,12 @@ document.addEventListener('DOMContentLoaded', () => {
     /* Récupération du code de la room dans l'URL */
     const code = location.search.slice(1);
 
+    let new_avatar = genRandomAvatar();
+    document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
-        const new_avatar = genRandomAvatar();
-
+        new_avatar = genRandomAvatar();
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
@@ -2234,6 +2235,8 @@ document.addEventListener('DOMContentLoaded', () => {
         color = res;
         setColor(color);
     });
+
+    setDefaultPseudo(randomPseudo());
 
 
     /**
@@ -2281,8 +2284,14 @@ function setColor(color) {
     avatarBtn.classList.add('color-'+color);
 }
 
+function setDefaultPseudo(pseudo) {
+    const name = document.getElementById('name')
+    name.setAttribute('value', pseudo);
+}
+
 module.exports = {
-    setColor
+    setColor,
+    setDefaultPseudo
 }
 },{}],8:[function(require,module,exports){
 (function (global){(function (){
@@ -2302,6 +2311,10 @@ const codeExists = (code) => {
         if (key === code) return true;
     }
     return false;
+}
+
+const capitalize = (str) => {
+    return str.replace(/^\w/, c => {return c.toUpperCase()});
 }
 
 function setCookie(name, value, days) {
@@ -2330,7 +2343,14 @@ const genRandomAvatar = () => {
     return `avatar_${rand}.png`
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };
+const randomPseudo = () => {
+    const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
+    const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
+
+    return `${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}${capitalize(adverbs[Math.floor(Math.random() * adverbs.length)])}`;
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"fs":1}],9:[function(require,module,exports){
 

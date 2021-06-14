@@ -1,5 +1,5 @@
-const {setCookie, genRandomAvatar} = require('../functions')
-const {setColor} = require('../client/views/join_views');
+const {setCookie, genRandomAvatar, randomPseudo} = require('../functions')
+const {setColor, setDefaultPseudo} = require('../client/views/join_views');
 const {io} = require("socket.io-client");
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,11 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     /* Récupération du code de la room dans l'URL */
     const code = location.search.slice(1);
 
+    let new_avatar = genRandomAvatar();
+    document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
-        const new_avatar = genRandomAvatar();
-
+        new_avatar = genRandomAvatar();
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
@@ -25,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
         color = res;
         setColor(color);
     });
+
+    setDefaultPseudo(randomPseudo());
 
 
     /**

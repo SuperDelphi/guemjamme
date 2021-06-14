@@ -113,6 +113,7 @@ io.on('connection', socket => {
         /* Si la room n'existe pas */
         if (!global.rooms[code]) return socket.emit('no_room');
         /* Si il n'y a plus de place dans la room (> 6) */
+        global.rooms[code].getNbUsers()
         if (global.rooms[code].getNbUsers() >= 6) return socket.emit('no_place')
 
         /* On attribut la couleur en fonction du nombre de joueurs dans la room (par default le premier est jaune) */

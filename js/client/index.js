@@ -1,15 +1,20 @@
+const {} = require('../functions')
+const {setDefaultPseudo} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
-const{ setCookie, genRandomAvatar } = require('../functions');
+const{ setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
+    setDefaultPseudo(randomPseudo())
+
+    let new_avatar = genRandomAvatar();
+    document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
-        const new_avatar = genRandomAvatar();
-
+        new_avatar = genRandomAvatar();
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
