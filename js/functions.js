@@ -49,8 +49,9 @@ const genRandomAvatar = () => {
 const randomPseudo = () => {
     const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
     const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
+    const adjectivs = ['special','womanly','deranged','blue','chivalrous','trashy','lively','near','plucky','groomed','known','tangy','guttural','smelly','public','gray','simplistic','depressed','ignorant','ritzy','elated','evasive','successful','misty','orange','ambiguous','even','demonic','disillusioned','madly','cold','charming','boiling']
 
-    return `${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}${capitalize(adverbs[Math.floor(Math.random() * adverbs.length)])}`;
+    return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
 }
 
 module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
