@@ -14,6 +14,7 @@ const RF = new RoomFactory();
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io("/",{ transports: ["websocket"] });
 
+    /* Récupération des cookies */
     const uuid = getCookie("uuid");
     const code = getCookie("code")
 
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
     * Si la room existe et que le client est dans la room
-    * le serven envoie un event new_join avec les nouvelles infos sur la room
+    * le serveur envoie un event new_join avec les nouvelles infos sur la room
     * Ces infos permettent de mettre a jours la liste des joueurs
     */
     socket.on('new_join', (serial_room) => {

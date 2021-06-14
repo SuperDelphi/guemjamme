@@ -19,6 +19,10 @@ class Room {
         return this.users;
     }
 
+    getNbUsers = () => {
+        return Object.keys(this.users).length;
+    }
+
     removeUser = (uuid) => {
         delete this.users[uuid];
     }

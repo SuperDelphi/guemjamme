@@ -1,13 +1,11 @@
 const {io} = require('socket.io-client')
 
-const UserFactory = require("../factories/UserFactory");
-const User = require('../classe/User')
-
 const{ setCookie, genRandomAvatar } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
+    /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
         const new_avatar = genRandomAvatar();
@@ -15,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
+    /**
+     * Lorsque le client envoie le formulaire pour créer la room
+     */
     const createRoomForm = document.getElementById('create_room')
     createRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -26,6 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
 
+        /**
+         * Par défault le créateur de la room est en jaune (sans doute le passer coté serveur pour éviter les soucis)
+         * Les préférences par défault sont :
+         *      - 60s
+         *      - 5w
+         */
         const color = 'yellow';
         const preferences = {gameDuration, wordAmount};
 
@@ -47,8 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setCookie("uuid", uuid, 1);
         setCookie("code", code, 1);
 
-
-        //socket.emit('new_user_join', code, serial_room);
         window.location.replace("/game");
     });
 

@@ -10,13 +10,13 @@ const updatePlayerList = (game, users) => {
         sortable.push([users[key], gameStat.getScore()]);
     }
 
-    console.log(sortable)
+    /*console.log(sortable)
 
     sortable[1][1] = 54
 
     sortable.sort((a,b) => {
         return a[1] - b[1];
-    });
+    });*/
 
     sortable.forEach(user => {
 
@@ -39,7 +39,7 @@ const updatePlayerList = (game, users) => {
                         </div>
                     </div>
                 </div>
-        
+                
                 <div class="player-infos">
                     <p class="player-name">${name}</p>
         

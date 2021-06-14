@@ -1,14 +1,14 @@
 const {setCookie, genRandomAvatar} = require('../functions')
+const {setColor} = require('../client/views/join_views');
 const {io} = require("socket.io-client");
-
-const RoomFactory = require('../factories/RoomFactory');
-const RF = new RoomFactory();
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
+    /* Récupération du code de la room dans l'URL */
     const code = location.search.slice(1);
 
+    /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
         const new_avatar = genRandomAvatar();
@@ -16,31 +16,41 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
     });
 
+    /**
+     * Vérifie si la room passer en url existe
+     */
+    var color = 'pink';
+    socket.emit('exist_room', code);
+    socket.on('room_exist', res => {
+        color = res;
+        setColor(color);
+    });
 
+
+    /**
+     * Lorsque le client envoie le formulaire pour rejoindre la room
+     */
     const joinRoomForm = document.getElementById('join_room');
     joinRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
-        const color = 'pink';
 
         /**
-         * Demande au server si cette room exist
-         * Si elle n'existe pas rien ne se passe (pour le moment)
-         * Si elle existe un nouvel utilisateur est créé et ajouté à la room
+         * Envoie la demande au serveur pour créer l'utilisateur et l'ajouter a la room
          */
-        socket.emit('exist_room', code, name, color, avatar);
+        socket.emit('create_user', code, name, color, avatar);
     });
 
     /**
-     * Si le room spécifer dans l'URL exist
+     * Event reçu du serveur après la création de l'utilisateur
      * Deux nouveau cookie sont enregisté :
      *  - code
      *  - uuid
-     * Puis le client est renvoyé vers la page game de la room
+     * Redirection du client vers la page /game de la room
      */
-    socket.on('room_exist', (code, uuid) => {
+    socket.on('created_user', (code, uuid) => {
         setCookie("uuid", uuid, 1);
         setCookie("code", code, 1);
 

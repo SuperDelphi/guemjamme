@@ -67,7 +67,7 @@ io.on('connection', socket => {
     });
 
     /**
-     * Lorsqu'un client arrive sur la page /game de ssa room
+     * Lorsqu'un client arrive sur la page /game de sa room
      */
     socket.on('join', (code, uuid) => {
         const game = global.rooms[code].getGame();
@@ -81,6 +81,9 @@ io.on('connection', socket => {
         io.sockets.in(code).emit('new_join', global.rooms[code]);
     })
 
+    /**
+     * Demande du client pour récupérer une room à jours
+     */
     socket.on('update_room', (code, room) => {
         const pre_room = global.rooms[code];
         const new_room = RF.getFromSocket(room);
@@ -106,17 +109,48 @@ io.on('connection', socket => {
     /**
      * Demande d'un client pour verifier l'existence d'une room
      */
-    socket.on('exist_room', (code, name, color, avatar) => {
-        if (!global.rooms[code]) return;
+    socket.on('exist_room', (code) => {
+        /* Si la room n'existe pas */
+        if (!global.rooms[code]) return socket.emit('no_room');
+        /* Si il n'y a plus de place dans la room (> 6) */
+        if (global.rooms[code].getNbUsers() >= 6) return socket.emit('no_place')
 
+        /* On attribut la couleur en fonction du nombre de joueurs dans la room (par default le premier est jaune) */
+        let color
+        console.log(global.rooms[code].getNbUsers())
+        switch (global.rooms[code].getNbUsers()) {
+            case 1:
+                color = 'pink';
+                break;
+            case 2:
+                color = 'purple';
+                break;
+            case 3:
+                color = 'blue';
+                break;
+            case 4:
+                color = 'green';
+                break;
+            case 5:
+                color = 'brown';
+                break;
+        }
+
+        socket.emit('room_exist', color);
+    })
+
+    /**
+     * Demande du client pour créer un nouvel utilisateur
+     */
+    socket.on('create_user', (code, name, color, avatar) => {
         const uuid = uuid4();
         const newUser = new User(uuid, name, color, avatar);
 
         global.rooms[code].addUser(newUser);
 
         socket.join(code);
-        socket.emit('room_exist', code, uuid);
-    })
+        socket.emit('created_user', code, uuid);
+    });
 });
 
 
