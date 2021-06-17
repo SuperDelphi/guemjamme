@@ -5,7 +5,7 @@
       <webServer id="ef87d4cb-aaca-407f-8776-48c5429eb8cf" name="wordus">
         <fileTransfer rootFolder="/root/wordus" accessType="SFTP" host="178.32.252.139" port="22" sshConfigId="68d62bfc-b3ab-4e63-8a11-b351c954241a" sshConfig="root@178.32.252.139:22 password">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
         </fileTransfer>
       </webServer>

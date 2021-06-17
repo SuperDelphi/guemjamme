@@ -2448,6 +2448,7 @@ const RF = new RoomFactory();
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io("/",{ transports: ["websocket"] });
 
+    /* Récupération des cookies */
     const uuid = getCookie("uuid");
     const code = getCookie("code")
 
@@ -2461,7 +2462,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
     * Si la room existe et que le client est dans la room
-    * le serven envoie un event new_join avec les nouvelles infos sur la room
+    * le serveur envoie un event new_join avec les nouvelles infos sur la room
     * Ces infos permettent de mettre a jours la liste des joueurs
     */
     socket.on('new_join', (serial_room) => {
@@ -2473,6 +2474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePlayerList(game, room.getUsers())
 
+        setPlayerColor(user.getInfo().color);
         setTimer(game.getTimeLeftFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
@@ -2539,7 +2541,16 @@ const updatePlayerList = (game, users) => {
 }
 
 function setPlayerColor(color) {
-
+    const playerName = document.querySelector('.input .player-name');
+    playerName.classList.forEach(col => {
+        if (col.includes('color')) playerName.classList.remove(col);
+    })
+    playerName.classList.add(`color-${color}`);
+    const playerInput = document.getElementById('player-input');
+    playerInput.classList.forEach(col => {
+        if (col.includes('color')) playerInput.classList.remove(col);
+    })
+    playerInput.classList.add(`color-${color}`);
 }
 
 function setTimer(time) {
@@ -2664,6 +2675,10 @@ const codeExists = (code) => {
     return false;
 }
 
+const capitalize = (str) => {
+    return str.replace(/^\w/, c => {return c.toUpperCase()});
+}
+
 function setCookie(name, value, days) {
     let expires = "";
     if (days) {
@@ -2690,7 +2705,15 @@ const genRandomAvatar = () => {
     return `avatar_${rand}.png`
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar };
+const randomPseudo = () => {
+    const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
+    const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
+    const adjectivs = ['special','womanly','deranged','blue','chivalrous','trashy','lively','near','plucky','groomed','known','tangy','guttural','smelly','public','gray','simplistic','depressed','ignorant','ritzy','elated','evasive','successful','misty','orange','ambiguous','even','demonic','disillusioned','madly','cold','charming','boiling']
+
+    return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
+}
+
+module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"fs":1}],17:[function(require,module,exports){
 

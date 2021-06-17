@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePlayerList(game, room.getUsers())
 
+        setPlayerColor(user.getInfo().color);
         setTimer(game.getTimeLeftFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())

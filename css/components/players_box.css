@@ -51,7 +51,6 @@
     display: flex;
 }
 
-
 .player-infos{
     margin-left: 1rem;
 
@@ -60,15 +59,12 @@
 .color-yellow .player-picture{
     background-color: var(--color_player_yellow);
 }
-
 .color-blue .player-picture{
     background-color: var(--color_player_blue);
 }
-
 .color-green .player-picture{
     background-color: var(--color_player_green);
 }
-
 .color-brown .player-picture{
     background-color: var(--color_player_brown);
 }

@@ -54,7 +54,16 @@ const updatePlayerList = (game, users) => {
 }
 
 function setPlayerColor(color) {
-
+    const playerName = document.querySelector('.input .player-name');
+    playerName.classList.forEach(col => {
+        if (col.includes('color')) playerName.classList.remove(col);
+    })
+    playerName.classList.add(`color-${color}`);
+    const playerInput = document.getElementById('player-input');
+    playerInput.classList.forEach(col => {
+        if (col.includes('color')) playerInput.classList.remove(col);
+    })
+    playerInput.classList.add(`color-${color}`);
 }
 
 function setTimer(time) {
