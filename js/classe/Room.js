@@ -58,6 +58,10 @@ class Room {
     hasUser = (uuid) => {
         return this.users[uuid] !== undefined;
     }
+
+    getOwner = () => {
+        return this.owner;
+    }
 }
 
 

@@ -2,7 +2,7 @@ const {} = require('../functions')
 const {setDefaultPseudo} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
-const{ setCookie, genRandomAvatar, randomPseudo } = require('../functions');
+const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();

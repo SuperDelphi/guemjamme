@@ -1,5 +1,7 @@
 const fs = require('fs');
 
+const Word = require('./classe/Word')
+
 const roomCode = () => {
     let code = "";
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
@@ -54,4 +56,44 @@ const randomPseudo = () => {
     return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
+function genWords(game) {
+    const wordsTXT = fs.readFileSync(__dirname + '/words.txt', {encoding: "utf8", flag: 'r'})
+
+    const words = wordsTXT.split(' ');
+
+    const finalWords = []
+    let coords = []
+    let firstLetters = []
+    for (let i = 0; i < game.getWordAmount(); i++) {
+        let posRandom = Math.floor(Math.random() * (8 - 1) +1)
+        while (coords.includes(posRandom)) {
+            posRandom = Math.floor(Math.random() * (8 - 1) +1)
+        }
+
+        let word = words[Math.floor(Math.random() * words.length)]
+        while (firstLetters.includes(word.charAt(0))) {
+            word = words[Math.floor(Math.random() * words.length)]
+        }
+
+        firstLetters.push(word.charAt(0))
+        coords.push(posRandom)
+
+        finalWords.push(new Word(
+            word,
+            posRandom
+        ))
+    }
+
+    game.setWords(finalWords);
+}
+
+module.exports = {
+    roomCode,
+    codeExists,
+    setCookie,
+    getCookie,
+    genRandomAvatar,
+    capitalize,
+    randomPseudo,
+    genWords
+};

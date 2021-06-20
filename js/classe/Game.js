@@ -14,6 +14,7 @@ class Game {
     duration
     endtime
     timeleft
+    wordAmount
 
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
@@ -33,8 +34,7 @@ class Game {
         this.status = Status.PLAYING;
     }
 
-    setWords = (words, amount) => {
-        // TODO: maybe API request
+    setWords = (words) => {
         this.words = words;
     }
 
@@ -48,6 +48,10 @@ class Game {
 
     getNbPlayer = () => {
         return Object.keys(this.users).length;
+    }
+
+    getWordAmount = () => {
+        return this.wordAmount;
     }
 
     getUserGameStats = (uuid) => {
@@ -75,6 +79,21 @@ class Game {
 
         return `${minutes}:${seconds}`
     }
+
+    getStatus = () => {
+        switch (this.status) {
+            case Status.WAITING:
+                return 'WAITING';
+            case Status.PLAYING:
+                return 'PLAYING';
+            case Status.ENDED:
+                return 'ENDED';
+        }
+    }
+
+    setStatus = (status) => {
+        this.status = status;
+    };
 }
 
 module.exports = Game;

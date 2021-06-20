@@ -14,10 +14,14 @@ const Game = require('./js/classe/Game');
 const RoomFactory = require('./js/factories/RoomFactory');
 const RF = new RoomFactory();
 
-const { roomCode, codeExists} = require('./js/functions');
+const {
+    roomCode,
+    codeExists,
+    genWords
+} = require('./js/functions');
 
 global.rooms = {}
-
+global.users = []
 
 
 app.use(express.static(__dirname+'/'));
@@ -45,6 +49,9 @@ app.get('/join', (req, res) => {
 
 
 io.on('connection', socket => {
+
+    ///////////// PAGE INDEX/HOST ROOM /////////////
+
     /**
      * Demande d'un client pour créer une nouvelle room
      */
@@ -62,49 +69,15 @@ io.on('connection', socket => {
         room.setGame(game)
 
         global.rooms[code] = room;
+        global.users.push(uuid, socket, code)
+
         socket.join(code);
         socket.emit('success_host_room', code, uuid);
     });
 
-    /**
-     * Lorsqu'un client arrive sur la page /game de sa room
-     */
-    socket.on('join', (code, uuid) => {
-        const game = global.rooms[code].getGame();
-        game.addUser(uuid);
 
-        console.log(game)
 
-        global.rooms[code].setGame(game)
-
-        socket.join(code);
-        io.sockets.in(code).emit('new_join', global.rooms[code]);
-    })
-
-    /**
-     * Demande du client pour récupérer une room à jours
-     */
-    socket.on('update_room', (code, room) => {
-        const pre_room = global.rooms[code];
-        const new_room = RF.getFromSocket(room);
-
-        console.log(pre_room.users)
-
-        pre_room.setPreferences(new_room.getPreferences());
-
-        const pre_game = pre_room.getGame();
-        const new_game = new_room.getGame();
-
-        for (const key in new_game.getUsers()) {
-            if (pre_game.hasOwnProperty(key)) return;
-            pre_game.addUser(key, new_game.getUserGameStats(key));
-        }
-
-        console.log(pre_room.users)
-
-        socket.join(code);
-        io.sockets.in(code).emit('updated_room', global.rooms[code]);
-    });
+    ///////////// PAGE JOIN /////////////
 
     /**
      * Demande d'un client pour verifier l'existence d'une room
@@ -148,10 +121,113 @@ io.on('connection', socket => {
         const newUser = new User(uuid, name, color, avatar);
 
         global.rooms[code].addUser(newUser);
+        global.users.push(uuid, socket, code)
 
         socket.join(code);
         socket.emit('created_user', code, uuid);
     });
+
+
+
+    ///////////// PAGE GAME /////////////
+
+    /**
+     * Lorsqu'un client arrive sur la page /game de sa room
+     */
+    socket.on('join', (code, uuid) => {
+        const game = global.rooms[code].getGame();
+        game.addUser(uuid);
+
+        global.rooms[code].setGame(game)
+
+        socket.join(code);
+        io.sockets.in(code).emit('new_join', global.rooms[code]);
+    })
+
+    /**
+     * Start Game Event
+     */
+    socket.on('start_game', (code) => {
+        const game = global.rooms[code].getGame();
+
+        // Start the game by changing the status
+        game.startGame();
+
+        genWords(game);
+        console.log(game.getWords())
+        console.log(game.getStatus())
+
+        global.rooms[code].setGame(game)
+
+
+        socket.join(code);
+        io.sockets.in(code).emit('game_started', global.rooms[code])
+    });
+
+    /**
+     * Envoie d'une lettre entrée par le client
+     */
+    socket.on('letter', (code, letter, uuid) => {
+
+        console.log(code, letter, uuid)
+
+        socket.join(code)
+        socket.emit('u_letter', code, letter, uuid);
+    });
+
+
+    /**
+     * Envoie d'un mot par l'utilistaeur
+     */
+    socket.on('word-finish', (code, word, uuid) => {
+        console.log(code, word, uuid)
+    });
+
+
+
+
+
+
+    /**
+     * Demande du client pour récupérer une room à jours
+     */
+    socket.on('update_room', (code, room) => {
+        const pre_room = global.rooms[code];
+        const new_room = RF.getFromSocket(room);
+
+        console.log(pre_room.users)
+
+        pre_room.setPreferences(new_room.getPreferences());
+
+        const pre_game = pre_room.getGame();
+        const new_game = new_room.getGame();
+
+        for (const key in new_game.getUsers()) {
+            if (pre_game.hasOwnProperty(key)) return;
+            pre_game.addUser(key, new_game.getUserGameStats(key));
+        }
+
+        console.log(pre_room.users)
+
+        socket.join(code);
+        io.sockets.in(code).emit('updated_room', global.rooms[code]);
+    });
+
+
+
+    /**
+     * On client disconnect
+     */
+    /*socket.on('disconnect', (socket) => {
+        console.log(socket)
+
+        var t
+        for (const prop in socketlist) {
+            if (socketlist[prop].socket === socket) t = prop;
+        }
+
+        console.log(t)
+    })*/
 });
 
 

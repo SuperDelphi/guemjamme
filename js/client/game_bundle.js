@@ -2223,6 +2223,7 @@ class Game {
     duration
     endtime
     timeleft
+    wordAmount
 
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
@@ -2242,8 +2243,7 @@ class Game {
         this.status = Status.PLAYING;
     }
 
-    setWords = (words, amount) => {
-        // TODO: maybe API request
+    setWords = (words) => {
         this.words = words;
     }
 
@@ -2257,6 +2257,10 @@ class Game {
 
     getNbPlayer = () => {
         return Object.keys(this.users).length;
+    }
+
+    getWordAmount = () => {
+        return this.wordAmount;
     }
 
     getUserGameStats = (uuid) => {
@@ -2284,6 +2288,21 @@ class Game {
 
         return `${minutes}:${seconds}`
     }
+
+    getStatus = () => {
+        switch (this.status) {
+            case Status.WAITING:
+                return 'WAITING';
+            case Status.PLAYING:
+                return 'PLAYING';
+            case Status.ENDED:
+                return 'ENDED';
+        }
+    }
+
+    setStatus = (status) => {
+        this.status = status;
+    };
 }
 
 module.exports = Game;
@@ -2392,6 +2411,10 @@ class Room {
     hasUser = (uuid) => {
         return this.users[uuid] !== undefined;
     }
+
+    getOwner = () => {
+        return this.owner;
+    }
 }
 
 
@@ -2432,6 +2455,61 @@ class User {
 module.exports = User
 
 },{}],10:[function(require,module,exports){
+class Word {
+    word
+    length
+    letters = []
+    position
+
+    users = {}
+
+    constructor(word, position) {
+        this.word = word;
+        this.length = word.length
+        this.letters = word.split('');
+        this.position = position;
+    }
+
+    addUser = (uuid, letter) => {
+        if (this.users[uuid]) this.users[uuid] = []
+        this.users[uuid].push(letter);
+    }
+
+    removeUser = (uuid) => {
+        this.users.remove(uuid)
+    }
+
+    getUsers = () => {
+        return this.users;
+    }
+
+    getLength = () => {
+        return this.length;
+    }
+
+    getLetters = () => {
+        return this.letters;
+    }
+
+    getWord = () => {
+        return this.word;
+    }
+
+    getPosition = () => {
+        return this.position;
+    }
+
+    includeLetter = (letter) => {
+        return this.letters.includes(letter);
+    }
+
+    equalWord = (word) => {
+        return this.word === word;
+    }
+}
+
+module.exports = Word
+},{}],11:[function(require,module,exports){
 const {getCookie} = require('../functions');
 const {io} = require("socket.io-client");
 const {
@@ -2439,18 +2517,27 @@ const {
     setPlayerColor,
     setTimer,
     setNumberPlayer,
-    setPoints
+    setPoints,
+    setWords
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
 const RF = new RoomFactory();
 
 document.addEventListener('DOMContentLoaded', () => {
+
     const socket = io("/",{ transports: ["websocket"] });
 
     /* Récupération des cookies */
     const uuid = getCookie("uuid");
     const code = getCookie("code")
+
+    var link = `pronobot.top:3000/join?${code}`;
+
+    var room
+    var game
+    var user
+    var userGS
 
     /**
      * Quand un client arrive sur cette page (/game)
@@ -2466,11 +2553,11 @@ document.addEventListener('DOMContentLoaded', () => {
     * Ces infos permettent de mettre a jours la liste des joueurs
     */
     socket.on('new_join', (serial_room) => {
-        let room = RF.getFromSocket(serial_room)
+        room = RF.getFromSocket(serial_room)
 
-        let game = room.getGame();
-        let user = room.getUsers()[uuid];
-        let userGS = game.getUserGameStats(uuid);
+        game = room.getGame();
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
 
@@ -2478,19 +2565,124 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimer(game.getTimeLeftFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
-    })
 
 
-    //TODO: Event listener start game button
-    //socket.emit('start_game', );
+    });
+
+    /**
+     * Show Link Button
+     */
+    const showLinkBtn = document.getElementById('show-link')
+    const showLinkText = document.getElementById('link')
+    showLinkBtn.addEventListener('click', () => {
+        if (room.getOwner().getUUID() !== uuid) return;
+        console.log('link shown')
+        showLinkBtn.classList.toggle('hidden')
+        showLinkText.classList.toggle('hidden')
+
+        showLinkText.setAttribute('value', link);
+    });
+
+    /**
+     * Copy Link Button
+     */
+    const copyLinkBtn = document.getElementById('copy-link')
+    copyLinkBtn.addEventListener('click', () => {
+        if (room.getOwner().getUUID() !== uuid) return;
+        var temp = document.createElement("INPUT");
+        temp.value = link;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+        alert('Link Copied !')
+    });
+
+
+    /**
+     * Start Game Button Event
+     */
+    const startGameBtn = document.getElementById('start_game');
+    startGameBtn.addEventListener('click', () => {
+        if (room.getOwner().getUUID() !== uuid) return;
+        socket.emit('start_game', code);
+    });
+
+
+    /**
+     * Lorsque la game a été déclarée comme commencée
+     */
+    socket.on('game_started', (serial_room) => {
+        room = RF.getFromSocket(serial_room);
+        game = room.getGame();
+        console.log(game.getStatus())
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        const preferencesSection = document.querySelector('.settings-section');
+        const gameSection = document.querySelector('.game-section');
+
+        preferencesSection.classList.toggle('hidden');
+        gameSection.classList.toggle('hidden');
+
+        setWords(game.getWords())
+    });
+
+
+    /**
+     * KeyDown Event listener
+     */
+    const char = "abcdefghijklmnopqrstuvwxyz";
+    let word = []
+    document.addEventListener('keydown', (e) => {
+        e.preventDefault();
+
+        // Si le status de la game n'est pas 'PLAYING'
+        if (game.getStatus() !== 'PLAYING') return
+
+        // Si la touche pressé est BackSpace (suppr)
+        if (e.keyCode === 8 && word.length > 0) {
+            word.pop();
+            document.getElementById('player-input').setAttribute('value', word.join(''));
+        }
+
+        // Si la touche pressé est Enter
+        if (e.keyCode === 13 && word.length > 0) {
+            const word_final = document.getElementById('player-input').getAttribute('value');
+            socket.emit('word-finish', code, word_final, uuid);
+        }
+
+        // Si la touche pressé est un caratères inclus dans char
+        if (char.includes(e.key)) {
+            word.push(e.key)
+            document.getElementById('player-input').setAttribute('value', word.join(''));
+            socket.emit('letter', code, e.key, uuid)
+        }
+    });
 })
-},{"../factories/RoomFactory":14,"../functions":16,"./views/game_views":11,"socket.io-client":42}],11:[function(require,module,exports){
+
+/**
+ * Demande du client pour update la room
+ *
+ * @param socket
+ * @param code
+ * @param room
+ * @returns {Promise<unknown>}
+ */
+const updateRoom = (socket, code, room) => {
+    return new Promise((resolve, reject) => {
+        socket.emit('update_room', code, room);
+        socket.on('updated_room', (serial_room) => {
+           resolve(RF.getFromSocket(serial_room));
+        });
+    });
+}
+},{"../factories/RoomFactory":15,"../functions":17,"./views/game_views":12,"socket.io-client":43}],12:[function(require,module,exports){
 const updatePlayerList = (game, users) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
 
-    console.log(users)
     let sortable = [];
     for (const key in users) {
         const gameStat = game.getUserGameStats(key);
@@ -2568,15 +2760,38 @@ function setPoints(points) {
     inputPoints.innerText = points;
 }
 
+function setWords(words) {
+    const wordsSection = document.querySelector('.game-section .words');
+    words.forEach(word => {
+        wordsSection.innerHTML += `
+            <div class="word case-${word.getPosition()}">
+                <div class="players-circles"><!--
+                    <span class="circle color-yellow"></span>
+                    <span class="circle color-blue"></span>
+                    <span class="circle color-green"></span>
+                    <span class="circle color-pink"></span>
+                    <span class="circle color-brown"></span>
+                    <span class="circle color-purple"></span>-->
+                </div>
+
+                <div class="word-container default">
+                    <p>${word.getWord()}</p>
+                </div>
+            </div>`
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
     setTimer,
     setNumberPlayer,
-    setPoints
+    setPoints,
+    setWords
 }
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 const Game = require('../classe/Game');
+const Word = require('../classe/Word')
 
 const GameStatsFactory = require('./GameStatsFactory');
 const GSF = new GameStatsFactory();
@@ -2589,6 +2804,21 @@ class GameFactory {
             game.wordAmount
         );
 
+        g.setStatus(game.status)
+
+        let words = []
+        game.words.forEach(word => {
+            const w = new Word(word.word, word.position)
+
+
+            Object.keys(word.users).forEach(x => {
+
+            });
+
+            words.push(w)
+        });
+        g.setWords(words)
+
         for (const k in game.users) {
             g.addUser(k, GSF.getFromSocket(game.users[k]));
         }
@@ -2597,7 +2827,7 @@ class GameFactory {
 }
 
 module.exports = GameFactory;
-},{"../classe/Game":6,"./GameStatsFactory":13}],13:[function(require,module,exports){
+},{"../classe/Game":6,"../classe/Word":10,"./GameStatsFactory":14}],14:[function(require,module,exports){
 const GameStats = require('../classe/GameStats');
 
 class GameStatsFactory {
@@ -2610,7 +2840,7 @@ class GameStatsFactory {
 }
 
 module.exports = GameStatsFactory;
-},{"../classe/GameStats":7}],14:[function(require,module,exports){
+},{"../classe/GameStats":7}],15:[function(require,module,exports){
 const Room = require("../classe/Room");
 
 const UserFactory = require('./UserFactory');
@@ -2639,12 +2869,11 @@ class RoomFactory {
 }
 
 module.exports = RoomFactory;
-},{"../classe/Room":8,"./GameFactory":12,"./UserFactory":15}],15:[function(require,module,exports){
+},{"../classe/Room":8,"./GameFactory":13,"./UserFactory":16}],16:[function(require,module,exports){
 const User = require("../classe/User");
 
 class UserFactory {
     getFromSocket = user => {
-        console.log(user)
         return new User(
             user.uuid,
             user.name,
@@ -2655,9 +2884,11 @@ class UserFactory {
 }
 
 module.exports = UserFactory
-},{"../classe/User":9}],16:[function(require,module,exports){
-(function (global){(function (){
+},{"../classe/User":9}],17:[function(require,module,exports){
+(function (global,__dirname){(function (){
 const fs = require('fs');
+
+const Word = require('./classe/Word')
 
 const roomCode = () => {
     let code = "";
@@ -2713,9 +2944,49 @@ const randomPseudo = () => {
     return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
 }
 
-module.exports = { roomCode, codeExists, setCookie, getCookie, genRandomAvatar, capitalize, randomPseudo };
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"fs":1}],17:[function(require,module,exports){
+function genWords(game) {
+    const wordsTXT = fs.readFileSync(__dirname + '/words.txt', {encoding: "utf8", flag: 'r'})
+
+    const words = wordsTXT.split(' ');
+
+    const finalWords = []
+    let coords = []
+    let firstLetters = []
+    for (let i = 0; i < game.getWordAmount(); i++) {
+        let posRandom = Math.floor(Math.random() * (8 - 1) +1)
+        while (coords.includes(posRandom)) {
+            posRandom = Math.floor(Math.random() * (8 - 1) +1)
+        }
+
+        let word = words[Math.floor(Math.random() * words.length)]
+        while (firstLetters.includes(word.charAt(0))) {
+            word = words[Math.floor(Math.random() * words.length)]
+        }
+
+        firstLetters.push(word.charAt(0))
+        coords.push(posRandom)
+
+        finalWords.push(new Word(
+            word,
+            posRandom
+        ))
+    }
+
+    game.setWords(finalWords);
+}
+
+module.exports = {
+    roomCode,
+    codeExists,
+    setCookie,
+    getCookie,
+    genRandomAvatar,
+    capitalize,
+    randomPseudo,
+    genWords
+};
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/..")
+},{"./classe/Word":10,"fs":1}],18:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -2802,7 +3073,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -2863,7 +3134,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -3040,7 +3311,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -3313,7 +3584,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":21,"_process":5}],21:[function(require,module,exports){
+},{"./common":22,"_process":5}],22:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3576,7 +3847,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":39}],22:[function(require,module,exports){
+},{"ms":40}],23:[function(require,module,exports){
 module.exports = (() => {
   if (typeof self !== "undefined") {
     return self;
@@ -3587,7 +3858,7 @@ module.exports = (() => {
   }
 })();
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 const Socket = require("./socket");
 
 module.exports = (uri, opts) => new Socket(uri, opts);
@@ -3603,7 +3874,7 @@ module.exports.Transport = require("./transport");
 module.exports.transports = require("./transports/index");
 module.exports.parser = require("engine.io-parser");
 
-},{"./socket":24,"./transport":25,"./transports/index":26,"engine.io-parser":37}],24:[function(require,module,exports){
+},{"./socket":25,"./transport":26,"./transports/index":27,"engine.io-parser":38}],25:[function(require,module,exports){
 const transports = require("./transports/index");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:socket");
@@ -4287,7 +4558,7 @@ function clone(obj) {
 
 module.exports = Socket;
 
-},{"./transports/index":26,"component-emitter":19,"debug":20,"engine.io-parser":37,"parseqs":40,"parseuri":41}],25:[function(require,module,exports){
+},{"./transports/index":27,"component-emitter":20,"debug":21,"engine.io-parser":38,"parseqs":41,"parseuri":42}],26:[function(require,module,exports){
 const parser = require("engine.io-parser");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:transport");
@@ -4408,7 +4679,7 @@ class Transport extends Emitter {
 
 module.exports = Transport;
 
-},{"component-emitter":19,"debug":20,"engine.io-parser":37}],26:[function(require,module,exports){
+},{"component-emitter":20,"debug":21,"engine.io-parser":38}],27:[function(require,module,exports){
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
 const XHR = require("./polling-xhr");
 const JSONP = require("./polling-jsonp");
@@ -4455,7 +4726,7 @@ function polling(opts) {
   }
 }
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":33,"./polling-jsonp":27,"./polling-xhr":28,"./websocket":31}],27:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":34,"./polling-jsonp":28,"./polling-xhr":29,"./websocket":32}],28:[function(require,module,exports){
 const Polling = require("./polling");
 const globalThis = require("../globalThis");
 
@@ -4652,7 +4923,7 @@ class JSONPPolling extends Polling {
 
 module.exports = JSONPPolling;
 
-},{"../globalThis":22,"./polling":29}],28:[function(require,module,exports){
+},{"../globalThis":23,"./polling":30}],29:[function(require,module,exports){
 /* global attachEvent */
 
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
@@ -4986,7 +5257,7 @@ function unloadHandler() {
 module.exports = XHR;
 module.exports.Request = Request;
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":33,"../globalThis":22,"../util":32,"./polling":29,"component-emitter":19,"debug":20}],29:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":34,"../globalThis":23,"../util":33,"./polling":30,"component-emitter":20,"debug":21}],30:[function(require,module,exports){
 const Transport = require("../transport");
 const parseqs = require("parseqs");
 const parser = require("engine.io-parser");
@@ -5193,7 +5464,7 @@ class Polling extends Transport {
 
 module.exports = Polling;
 
-},{"../transport":25,"debug":20,"engine.io-parser":37,"parseqs":40,"yeast":51}],30:[function(require,module,exports){
+},{"../transport":26,"debug":21,"engine.io-parser":38,"parseqs":41,"yeast":52}],31:[function(require,module,exports){
 const globalThis = require("../globalThis");
 
 module.exports = {
@@ -5202,7 +5473,7 @@ module.exports = {
   defaultBinaryType: "arraybuffer"
 };
 
-},{"../globalThis":22}],31:[function(require,module,exports){
+},{"../globalThis":23}],32:[function(require,module,exports){
 (function (Buffer){(function (){
 const Transport = require("../transport");
 const parser = require("engine.io-parser");
@@ -5461,7 +5732,7 @@ class WS extends Transport {
 module.exports = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../transport":25,"../util":32,"./websocket-constructor":30,"buffer":3,"debug":20,"engine.io-parser":37,"parseqs":40,"yeast":51}],32:[function(require,module,exports){
+},{"../transport":26,"../util":33,"./websocket-constructor":31,"buffer":3,"debug":21,"engine.io-parser":38,"parseqs":41,"yeast":52}],33:[function(require,module,exports){
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
     if (obj.hasOwnProperty(k)) {
@@ -5471,7 +5742,7 @@ module.exports.pick = (obj, ...attr) => {
   }, {});
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 
 const hasCORS = require("has-cors");
@@ -5513,7 +5784,7 @@ module.exports = function(opts) {
   }
 };
 
-},{"./globalThis":22,"has-cors":38}],34:[function(require,module,exports){
+},{"./globalThis":23,"has-cors":39}],35:[function(require,module,exports){
 const PACKET_TYPES = Object.create(null); // no Map = no polyfill
 PACKET_TYPES["open"] = "0";
 PACKET_TYPES["close"] = "1";
@@ -5536,7 +5807,7 @@ module.exports = {
   ERROR_PACKET
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 const { PACKET_TYPES_REVERSE, ERROR_PACKET } = require("./commons");
 
 const withNativeArrayBuffer = typeof ArrayBuffer === "function";
@@ -5595,7 +5866,7 @@ const mapBinary = (data, binaryType) => {
 
 module.exports = decodePacket;
 
-},{"./commons":34,"base64-arraybuffer":18}],36:[function(require,module,exports){
+},{"./commons":35,"base64-arraybuffer":19}],37:[function(require,module,exports){
 const { PACKET_TYPES } = require("./commons");
 
 const withNativeBlob =
@@ -5643,7 +5914,7 @@ const encodeBlobAsBase64 = (data, callback) => {
 
 module.exports = encodePacket;
 
-},{"./commons":34}],37:[function(require,module,exports){
+},{"./commons":35}],38:[function(require,module,exports){
 const encodePacket = require("./encodePacket");
 const decodePacket = require("./decodePacket");
 
@@ -5687,7 +5958,7 @@ module.exports = {
   decodePayload
 };
 
-},{"./decodePacket":35,"./encodePacket":36}],38:[function(require,module,exports){
+},{"./decodePacket":36,"./encodePacket":37}],39:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -5706,7 +5977,7 @@ try {
   module.exports = false;
 }
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -5870,7 +6141,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -5909,7 +6180,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5979,7 +6250,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = exports.Socket = exports.Manager = exports.protocol = void 0;
@@ -6052,7 +6323,7 @@ var socket_1 = require("./socket");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_1.Socket; } });
 exports.default = lookup;
 
-},{"./manager":43,"./socket":45,"./url":47,"debug":20,"socket.io-parser":49}],43:[function(require,module,exports){
+},{"./manager":44,"./socket":46,"./url":48,"debug":21,"socket.io-parser":50}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Manager = void 0;
@@ -6429,7 +6700,7 @@ class Manager extends typed_events_1.StrictEventEmitter {
 }
 exports.Manager = Manager;
 
-},{"./on":44,"./socket":45,"./typed-events":46,"backo2":17,"debug":20,"engine.io-client":23,"socket.io-parser":49}],44:[function(require,module,exports){
+},{"./on":45,"./socket":46,"./typed-events":47,"backo2":18,"debug":21,"engine.io-client":24,"socket.io-parser":50}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -6441,7 +6712,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = void 0;
@@ -6903,7 +7174,7 @@ class Socket extends typed_events_1.StrictEventEmitter {
 }
 exports.Socket = Socket;
 
-},{"./on":44,"./typed-events":46,"debug":20,"socket.io-parser":49}],46:[function(require,module,exports){
+},{"./on":45,"./typed-events":47,"debug":21,"socket.io-parser":50}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StrictEventEmitter = void 0;
@@ -6977,7 +7248,7 @@ class StrictEventEmitter extends Emitter {
 }
 exports.StrictEventEmitter = StrictEventEmitter;
 
-},{"component-emitter":19}],47:[function(require,module,exports){
+},{"component-emitter":20}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.url = void 0;
@@ -7045,7 +7316,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":20,"parseuri":41}],48:[function(require,module,exports){
+},{"debug":21,"parseuri":42}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -7127,7 +7398,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary":50}],49:[function(require,module,exports){
+},{"./is-binary":51}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -7409,7 +7680,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary":48,"./is-binary":50,"component-emitter":19,"debug":20}],50:[function(require,module,exports){
+},{"./binary":49,"./is-binary":51,"component-emitter":20,"debug":21}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -7466,7 +7737,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -7536,4 +7807,4 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}]},{},[10]);
+},{}]},{},[11]);

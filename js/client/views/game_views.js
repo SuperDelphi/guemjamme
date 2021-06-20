@@ -3,7 +3,6 @@ const updatePlayerList = (game, users) => {
 
     playerList.innerHTML = "";
 
-    console.log(users)
     let sortable = [];
     for (const key in users) {
         const gameStat = game.getUserGameStats(key);
@@ -81,10 +80,32 @@ function setPoints(points) {
     inputPoints.innerText = points;
 }
 
+function setWords(words) {
+    const wordsSection = document.querySelector('.game-section .words');
+    words.forEach(word => {
+        wordsSection.innerHTML += `
+            <div class="word case-${word.getPosition()}">
+                <div class="players-circles"><!--
+                    <span class="circle color-yellow"></span>
+                    <span class="circle color-blue"></span>
+                    <span class="circle color-green"></span>
+                    <span class="circle color-pink"></span>
+                    <span class="circle color-brown"></span>
+                    <span class="circle color-purple"></span>-->
+                </div>
+
+                <div class="word-container default">
+                    <p>${word.getWord()}</p>
+                </div>
+            </div>`
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
     setTimer,
     setNumberPlayer,
-    setPoints
+    setPoints,
+    setWords
 }
