@@ -84,7 +84,7 @@ function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     words.forEach(word => {
         wordsSection.innerHTML += `
-            <div class="word case-${word.getPosition()}">
+            <div id="${word.getWord()}" class="word case-${word.getPosition()}">
                 <div class="players-circles"><!--
                     <span class="circle color-yellow"></span>
                     <span class="circle color-blue"></span>
@@ -101,11 +101,25 @@ function setWords(words) {
     });
 }
 
+function updateWordUsers(words) {
+    words.forEach(word => {
+
+        let wordsUsers = document.querySelector(`#${word.getWord()} .players-circles`);
+
+        let l = ``
+        Object.keys(word.getUsers()).forEach(uuid => {
+            if (word.getUsers()[uuid]) l += `<span class="circle color-${word.getUsers()[uuid]}"></span>`
+        });
+        wordsUsers.innerHTML = l
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords
+    setWords,
+    updateWordUsers
 }

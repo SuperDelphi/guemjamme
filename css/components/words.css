@@ -48,11 +48,11 @@
     border-radius: 50%;
 }
 
-.word .players-circles .circle.color-dark_pink {
+.word .players-circles .circle.color-purple {
     background-color: var(--color_player_dark_pink);
 }
 
-.word .players-circles .circle.color-light_pink {
+.word .players-circles .circle.color-pink {
     background-color: var(--color_player_light_pink);
 }
 

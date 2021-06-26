@@ -130,7 +130,7 @@
 .wrapper .game-section .player-input {
     display: flex;
     align-items: center;
-    margin: 8% 0 0 15%;
+    margin: 5% 0 0 15%;
 }
 
 .wrapper .game-section .player-input .input {

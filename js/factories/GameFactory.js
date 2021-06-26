@@ -18,9 +18,8 @@ class GameFactory {
         game.words.forEach(word => {
             const w = new Word(word.word, word.position)
 
-
-            Object.keys(word.users).forEach(x => {
-
+            Object.keys(word.users).forEach(uuid => {
+                w.addUser(uuid, word.users[uuid])
             });
 
             words.push(w)

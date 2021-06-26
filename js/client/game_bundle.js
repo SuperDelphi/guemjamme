@@ -2470,13 +2470,12 @@ class Word {
         this.position = position;
     }
 
-    addUser = (uuid, letter) => {
-        if (this.users[uuid]) this.users[uuid] = []
-        this.users[uuid].push(letter);
+    addUser = (uuid, color) => {
+       if (!this.users[uuid]) this.users[uuid] = color;
     }
 
     removeUser = (uuid) => {
-        this.users.remove(uuid)
+        if (this.users[uuid]) delete this.users[uuid]
     }
 
     getUsers = () => {
@@ -2499,13 +2498,27 @@ class Word {
         return this.position;
     }
 
-    includeLetter = (letter) => {
-        return this.letters.includes(letter);
+    include = (word_input) => {
+
+        let letters_input = word_input.split('')
+        let inputSize = word_input.length
+        let letters = this.letters.slice(0,inputSize)
+        return arraysEqual(letters, letters_input)
     }
 
     equalWord = (word) => {
         return this.word === word;
     }
+}
+
+function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
 
 module.exports = Word
@@ -2518,7 +2531,8 @@ const {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords
+    setWords,
+    updateWordUsers
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -2615,7 +2629,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('game_started', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
-        console.log(game.getStatus())
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
@@ -2656,8 +2669,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (char.includes(e.key)) {
             word.push(e.key)
             document.getElementById('player-input').setAttribute('value', word.join(''));
-            socket.emit('letter', code, e.key, uuid)
+            socket.emit('input', code, word.join(''), word, uuid)
         }
+    });
+
+
+    socket.on('update_letter', (serial_room) => {
+        room = RF.getFromSocket(serial_room)
+        game = room.getGame()
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        console.log(game.getWords());
+        updateWordUsers(game.getWords())
+    })
+
+    socket.on('word_finish', (uuid, word) => {
+        console.log(uuid, word)
     });
 })
 
@@ -2764,7 +2792,7 @@ function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     words.forEach(word => {
         wordsSection.innerHTML += `
-            <div class="word case-${word.getPosition()}">
+            <div id="${word.getWord()}" class="word case-${word.getPosition()}">
                 <div class="players-circles"><!--
                     <span class="circle color-yellow"></span>
                     <span class="circle color-blue"></span>
@@ -2781,13 +2809,27 @@ function setWords(words) {
     });
 }
 
+function updateWordUsers(words) {
+    words.forEach(word => {
+
+        let wordsUsers = document.querySelector(`#${word.getWord()} .players-circles`);
+
+        let l = ``
+        Object.keys(word.getUsers()).forEach(uuid => {
+            if (word.getUsers()[uuid]) l += `<span class="circle color-${word.getUsers()[uuid]}"></span>`
+        });
+        wordsUsers.innerHTML = l
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords
+    setWords,
+    updateWordUsers
 }
 },{}],13:[function(require,module,exports){
 const Game = require('../classe/Game');
@@ -2810,9 +2852,8 @@ class GameFactory {
         game.words.forEach(word => {
             const w = new Word(word.word, word.position)
 
-
-            Object.keys(word.users).forEach(x => {
-
+            Object.keys(word.users).forEach(uuid => {
+                w.addUser(uuid, word.users[uuid])
             });
 
             words.push(w)

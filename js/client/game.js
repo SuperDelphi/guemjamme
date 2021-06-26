@@ -6,7 +6,8 @@ const {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords
+    setWords,
+    updateWordUsers
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -103,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('game_started', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
-        console.log(game.getStatus())
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
@@ -144,8 +144,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (char.includes(e.key)) {
             word.push(e.key)
             document.getElementById('player-input').setAttribute('value', word.join(''));
-            socket.emit('letter', code, e.key, uuid)
+            socket.emit('input', code, word.join(''), word, uuid)
         }
+    });
+
+
+    socket.on('update_letter', (serial_room) => {
+        room = RF.getFromSocket(serial_room)
+        game = room.getGame()
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        console.log(game.getWords());
+        updateWordUsers(game.getWords())
+    })
+
+    socket.on('word_finish', (uuid, word) => {
+        console.log(uuid, word)
     });
 })
 

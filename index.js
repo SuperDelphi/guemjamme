@@ -165,14 +165,33 @@ io.on('connection', socket => {
     });
 
     /**
-     * Envoie d'une lettre entrée par le client
+     * Input d'un client
      */
-    socket.on('letter', (code, letter, uuid) => {
+    socket.on('input', (code, word_input, letters, uuid) => {
 
-        console.log(code, letter, uuid)
+        console.log(code, word_input, letters, uuid)
+
+        const game = global.rooms[code].getGame()
+        const user = global.rooms[code].getUsers()[uuid]
+        const words = game.getWords()
+
+        words.forEach(word => {
+
+            if (word.include(word_input)) {
+                word.addUser(uuid, user.getInfo().color);
+            }
+            else if (word.equalWord(word_input)) {
+                console.log(uuid, 'finish a word')
+                io.sockets.in(code).emit('word_finish', uuid, word)
+            }
+            else word.removeUser(uuid)
+        });
+
+        game.setWords(words);
+        global.rooms[code].setGame(game)
 
         socket.join(code)
-        socket.emit('u_letter', code, letter, uuid);
+        io.sockets.in(code).emit('update_letter', global.rooms[code])
     });
 
 
