@@ -57,9 +57,6 @@ const randomPseudo = () => {
 }
 
 function genWords(game) {
-    const wordsTXT = fs.readFileSync(__dirname + '/words.txt', {encoding: "utf8", flag: 'r'})
-
-    const words = wordsTXT.split(' ');
 
     const finalWords = []
     let coords = []
@@ -70,9 +67,9 @@ function genWords(game) {
             posRandom = Math.floor(Math.random() * (8 - 1) +1)
         }
 
-        let word = words[Math.floor(Math.random() * words.length)]
+        let word = randomWord()
         while (firstLetters.includes(word.charAt(0))) {
-            word = words[Math.floor(Math.random() * words.length)]
+            word = randomWord()
         }
 
         firstLetters.push(word.charAt(0))
@@ -87,6 +84,36 @@ function genWords(game) {
     game.setWords(finalWords);
 }
 
+const genSingleWord = (game) => {
+
+    let word = randomWord()
+    let position = Math.floor(Math.random() * (8 - 1) +1)
+
+    const firsLetter = []
+    const pos = []
+    for (const key in game.getWords()) {
+        firsLetter.push(game.getWords()[key].getWord().charAt(0))
+        pos.push(game.getWords()[key].getPosition())
+    }
+
+    while (firsLetter.includes(word.charAt(0))) {
+        word = randomWord()
+    }
+
+    while (pos.includes(position)) {
+        position = Math.floor(Math.random() * (8 - 1) +1);
+    }
+
+    return new Word(word, position)
+}
+
+
+const randomWord = () => {
+    const wordsTXT = fs.readFileSync(__dirname + '/words/fr.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\r\n');
+    return words[Math.floor(Math.random() * words.length)]
+}
+
 module.exports = {
     roomCode,
     codeExists,
@@ -95,5 +122,6 @@ module.exports = {
     genRandomAvatar,
     capitalize,
     randomPseudo,
-    genWords
+    genWords,
+    genSingleWord
 };

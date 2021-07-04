@@ -2228,7 +2228,7 @@ class Game {
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
         this.status = Status.WAITING;
-        this.words = [];
+        this.words = {};
 
         this.duration =  duration;
         this.endtime = Date.now() + 1000 * this.duration;
@@ -2244,7 +2244,9 @@ class Game {
     }
 
     setWords = (words) => {
-        this.words = words;
+        for (let i = 0; i < words.length; i++) {
+            this.words[i] = words[i]
+        }
     }
 
     getWords = () => {
@@ -2464,6 +2466,7 @@ class Word {
     users = {}
 
     constructor(word, position) {
+        console.log(word)
         this.word = word;
         this.length = word.length
         this.letters = word.split('');
@@ -2646,7 +2649,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * KeyDown Event listener
      */
     const char = "abcdefghijklmnopqrstuvwxyz";
-    let word = []
+    var input_user = []
     document.addEventListener('keydown', (e) => {
         e.preventDefault();
 
@@ -2654,25 +2657,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (game.getStatus() !== 'PLAYING') return
 
         // Si la touche pressé est BackSpace (suppr)
-        if (e.keyCode === 8 && word.length > 0) {
-            word.pop();
-            document.getElementById('player-input').setAttribute('value', word.join(''));
+        if (e.keyCode === 8 && input_user.length > 0) {
+            input_user.pop();
+            document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
         }
 
         // Si la touche pressé est Enter
-        if (e.keyCode === 13 && word.length > 0) {
+        if (e.keyCode === 13 && input_user.length > 0) {
             const word_final = document.getElementById('player-input').getAttribute('value');
-            socket.emit('word-finish', code, word_final, uuid);
+            socket.emit('word-finish', code, word_final.toLowerCase(), uuid);
         }
 
         // Si la touche pressé est un caratères inclus dans char
         if (char.includes(e.key)) {
-            word.push(e.key)
-            document.getElementById('player-input').setAttribute('value', word.join(''));
-            socket.emit('input', code, word.join(''), word, uuid)
+            input_user.push(e.key)
+            document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
+            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
     });
-
 
     socket.on('update_letter', (serial_room) => {
         room = RF.getFromSocket(serial_room)
@@ -2680,12 +2682,15 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        console.log(game.getWords());
+        setWords(game.getWords())
         updateWordUsers(game.getWords())
     })
 
-    socket.on('word_finish', (uuid, word) => {
-        console.log(uuid, word)
+    socket.on('word_finish', (uuid_finisher, word_finish) => {
+        if (uuid_finisher === uuid) {
+            document.getElementById('player-input').setAttribute('value', '');
+            input_user = []
+        }
     });
 })
 
@@ -2790,36 +2795,31 @@ function setPoints(points) {
 
 function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
-    words.forEach(word => {
+    wordsSection.innerHTML = ''
+    console.log(words)
+    for (const key in words) {
         wordsSection.innerHTML += `
-            <div id="${word.getWord()}" class="word case-${word.getPosition()}">
-                <div class="players-circles"><!--
-                    <span class="circle color-yellow"></span>
-                    <span class="circle color-blue"></span>
-                    <span class="circle color-green"></span>
-                    <span class="circle color-pink"></span>
-                    <span class="circle color-brown"></span>
-                    <span class="circle color-purple"></span>-->
+            <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
+                <div class="players-circles">
                 </div>
 
                 <div class="word-container default">
-                    <p>${word.getWord()}</p>
+                    <p>${words[key].getWord()}</p>
                 </div>
             </div>`
-    });
+    }
 }
 
 function updateWordUsers(words) {
-    words.forEach(word => {
-
-        let wordsUsers = document.querySelector(`#${word.getWord()} .players-circles`);
+    for (const key in words) {
+        let wordsUsers = document.querySelector(`#${words[key].getWord()} .players-circles`);
 
         let l = ``
-        Object.keys(word.getUsers()).forEach(uuid => {
-            if (word.getUsers()[uuid]) l += `<span class="circle color-${word.getUsers()[uuid]}"></span>`
+        Object.keys(words[key].getUsers()).forEach(uuid => {
+            if (words[key].getUsers()[uuid]) l += `<span class="circle color-${words[key].getUsers()[uuid]}"></span>`
         });
         wordsUsers.innerHTML = l
-    });
+    }
 }
 
 module.exports = {
@@ -2849,6 +2849,16 @@ class GameFactory {
         g.setStatus(game.status)
 
         let words = []
+        for (const word in game.words) {
+            console.log(word)
+            const w = new Word(game.words[word].word, game.words[word].position)
+
+            Object.keys(game.words[word].users).forEach(uuid => {
+                w.addUser(uuid, game.words[word].users[uuid])
+            });
+
+            words.push(w)
+        }/*
         game.words.forEach(word => {
             const w = new Word(word.word, word.position)
 
@@ -2857,7 +2867,7 @@ class GameFactory {
             });
 
             words.push(w)
-        });
+        });*/
         g.setWords(words)
 
         for (const k in game.users) {
@@ -2986,9 +2996,6 @@ const randomPseudo = () => {
 }
 
 function genWords(game) {
-    const wordsTXT = fs.readFileSync(__dirname + '/words.txt', {encoding: "utf8", flag: 'r'})
-
-    const words = wordsTXT.split(' ');
 
     const finalWords = []
     let coords = []
@@ -2999,9 +3006,9 @@ function genWords(game) {
             posRandom = Math.floor(Math.random() * (8 - 1) +1)
         }
 
-        let word = words[Math.floor(Math.random() * words.length)]
+        let word = randomWord()
         while (firstLetters.includes(word.charAt(0))) {
-            word = words[Math.floor(Math.random() * words.length)]
+            word = randomWord()
         }
 
         firstLetters.push(word.charAt(0))
@@ -3016,6 +3023,36 @@ function genWords(game) {
     game.setWords(finalWords);
 }
 
+const genSingleWord = (game) => {
+
+    let word = randomWord()
+    let position = Math.floor(Math.random() * (8 - 1) +1)
+
+    const firsLetter = []
+    const pos = []
+    for (const key in game.getWords()) {
+        firsLetter.push(game.getWords()[key].getWord().charAt(0))
+        pos.push(game.getWords()[key].getPosition())
+    }
+
+    while (firsLetter.includes(word.charAt(0))) {
+        word = randomWord()
+    }
+
+    while (pos.includes(position)) {
+        position = Math.floor(Math.random() * (8 - 1) +1);
+    }
+
+    return new Word(word, position)
+}
+
+
+const randomWord = () => {
+    const wordsTXT = fs.readFileSync(__dirname + '/words/fr.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\r\n');
+    return words[Math.floor(Math.random() * words.length)]
+}
+
 module.exports = {
     roomCode,
     codeExists,
@@ -3024,7 +3061,8 @@ module.exports = {
     genRandomAvatar,
     capitalize,
     randomPseudo,
-    genWords
+    genWords,
+    genSingleWord
 };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/..")
 },{"./classe/Word":10,"fs":1}],18:[function(require,module,exports){

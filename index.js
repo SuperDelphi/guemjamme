@@ -12,6 +12,7 @@ const Room = require('./js/classe/Room');
 const Game = require('./js/classe/Game');
 
 const RoomFactory = require('./js/factories/RoomFactory');
+const {genSingleWord} = require("./js/functions");
 const RF = new RoomFactory();
 
 const {
@@ -91,7 +92,6 @@ io.on('connection', socket => {
 
         /* On attribut la couleur en fonction du nombre de joueurs dans la room (par default le premier est jaune) */
         let color
-        console.log(global.rooms[code].getNbUsers())
         switch (global.rooms[code].getNbUsers()) {
             case 1:
                 color = 'pink';
@@ -154,7 +154,6 @@ io.on('connection', socket => {
         game.startGame();
 
         genWords(game);
-        console.log(game.getWords())
         console.log(game.getStatus())
 
         global.rooms[code].setGame(game)
@@ -175,17 +174,38 @@ io.on('connection', socket => {
         const user = global.rooms[code].getUsers()[uuid]
         const words = game.getWords()
 
-        words.forEach(word => {
+        var i = 0
+
+        for (const key in words) {
+            let w = words[key]
+
+            if (w.include(word_input)) {
+                w.addUser(uuid, user.getInfo().color)
+            } else {
+                w.removeUser(uuid)
+            }
+
+            if (w.equalWord(word_input)) {
+                delete words[key]
+                words[key] = genSingleWord(game)
+
+                io.sockets.in(code).emit('word_finish', uuid, words[key])
+            }
+        }
+        /*words.forEach(word => {
 
             if (word.include(word_input)) {
                 word.addUser(uuid, user.getInfo().color);
             }
-            else if (word.equalWord(word_input)) {
-                console.log(uuid, 'finish a word')
-                io.sockets.in(code).emit('word_finish', uuid, word)
+            if (word.equalWord(word_input)) {
+
+
+
+                //io.sockets.in(code).emit('word_finish', uuid, word)
             }
             else word.removeUser(uuid)
-        });
+            i++
+        });*/
 
         game.setWords(words);
         global.rooms[code].setGame(game)
@@ -193,18 +213,6 @@ io.on('connection', socket => {
         socket.join(code)
         io.sockets.in(code).emit('update_letter', global.rooms[code])
     });
-
-
-    /**
-     * Envoie d'un mot par l'utilistaeur
-     */
-    socket.on('word-finish', (code, word, uuid) => {
-        console.log(code, word, uuid)
-    });
-
-
-
-
 
 
     /**

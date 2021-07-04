@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * KeyDown Event listener
      */
     const char = "abcdefghijklmnopqrstuvwxyz";
-    let word = []
+    var input_user = []
     document.addEventListener('keydown', (e) => {
         e.preventDefault();
 
@@ -129,25 +129,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (game.getStatus() !== 'PLAYING') return
 
         // Si la touche pressé est BackSpace (suppr)
-        if (e.keyCode === 8 && word.length > 0) {
-            word.pop();
-            document.getElementById('player-input').setAttribute('value', word.join(''));
+        if (e.keyCode === 8 && input_user.length > 0) {
+            input_user.pop();
+            document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
         }
 
         // Si la touche pressé est Enter
-        if (e.keyCode === 13 && word.length > 0) {
+        if (e.keyCode === 13 && input_user.length > 0) {
             const word_final = document.getElementById('player-input').getAttribute('value');
-            socket.emit('word-finish', code, word_final, uuid);
+            socket.emit('word-finish', code, word_final.toLowerCase(), uuid);
         }
 
         // Si la touche pressé est un caratères inclus dans char
         if (char.includes(e.key)) {
-            word.push(e.key)
-            document.getElementById('player-input').setAttribute('value', word.join(''));
-            socket.emit('input', code, word.join(''), word, uuid)
+            input_user.push(e.key)
+            document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
+            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
     });
-
 
     socket.on('update_letter', (serial_room) => {
         room = RF.getFromSocket(serial_room)
@@ -155,12 +154,15 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        console.log(game.getWords());
+        setWords(game.getWords())
         updateWordUsers(game.getWords())
     })
 
-    socket.on('word_finish', (uuid, word) => {
-        console.log(uuid, word)
+    socket.on('word_finish', (uuid_finisher, word_finish) => {
+        if (uuid_finisher === uuid) {
+            document.getElementById('player-input').setAttribute('value', '');
+            input_user = []
+        }
     });
 })
 

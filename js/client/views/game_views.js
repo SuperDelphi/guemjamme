@@ -82,36 +82,31 @@ function setPoints(points) {
 
 function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
-    words.forEach(word => {
+    wordsSection.innerHTML = ''
+    console.log(words)
+    for (const key in words) {
         wordsSection.innerHTML += `
-            <div id="${word.getWord()}" class="word case-${word.getPosition()}">
-                <div class="players-circles"><!--
-                    <span class="circle color-yellow"></span>
-                    <span class="circle color-blue"></span>
-                    <span class="circle color-green"></span>
-                    <span class="circle color-pink"></span>
-                    <span class="circle color-brown"></span>
-                    <span class="circle color-purple"></span>-->
+            <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
+                <div class="players-circles">
                 </div>
 
                 <div class="word-container default">
-                    <p>${word.getWord()}</p>
+                    <p>${words[key].getWord()}</p>
                 </div>
             </div>`
-    });
+    }
 }
 
 function updateWordUsers(words) {
-    words.forEach(word => {
-
-        let wordsUsers = document.querySelector(`#${word.getWord()} .players-circles`);
+    for (const key in words) {
+        let wordsUsers = document.querySelector(`#${words[key].getWord()} .players-circles`);
 
         let l = ``
-        Object.keys(word.getUsers()).forEach(uuid => {
-            if (word.getUsers()[uuid]) l += `<span class="circle color-${word.getUsers()[uuid]}"></span>`
+        Object.keys(words[key].getUsers()).forEach(uuid => {
+            if (words[key].getUsers()[uuid]) l += `<span class="circle color-${words[key].getUsers()[uuid]}"></span>`
         });
         wordsUsers.innerHTML = l
-    });
+    }
 }
 
 module.exports = {

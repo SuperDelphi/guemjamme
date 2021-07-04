@@ -15,6 +15,16 @@ class GameFactory {
         g.setStatus(game.status)
 
         let words = []
+        for (const word in game.words) {
+            console.log(word)
+            const w = new Word(game.words[word].word, game.words[word].position)
+
+            Object.keys(game.words[word].users).forEach(uuid => {
+                w.addUser(uuid, game.words[word].users[uuid])
+            });
+
+            words.push(w)
+        }/*
         game.words.forEach(word => {
             const w = new Word(word.word, word.position)
 
@@ -23,7 +33,7 @@ class GameFactory {
             });
 
             words.push(w)
-        });
+        });*/
         g.setWords(words)
 
         for (const k in game.users) {

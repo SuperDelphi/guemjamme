@@ -19,7 +19,7 @@ class Game {
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
         this.status = Status.WAITING;
-        this.words = [];
+        this.words = {};
 
         this.duration =  duration;
         this.endtime = Date.now() + 1000 * this.duration;
@@ -35,7 +35,9 @@ class Game {
     }
 
     setWords = (words) => {
-        this.words = words;
+        for (let i = 0; i < words.length; i++) {
+            this.words[i] = words[i]
+        }
     }
 
     getWords = () => {
