@@ -27,14 +27,20 @@
         <form class="settings">
             <p>PREFERENCES DE PARTIE</p>
 
-            <div class="game-duration">
+            <div class="game-duration range">
                 <label for="game_duration">Durée de la partie</label>
-                <input id="game_duration" type="range" min="30" max="180" step="10">
+                <div class="slider-value">
+                    <span>60 sec.</span>
+                </div>
+                <input id="game_duration" type="range" value="60" min="30" max="180" step="10">
             </div>
 
-            <div class="words-number">
+            <div class="words-number range">
                 <label for="words-number">Mots affichés en même temps</label>
-                <input id="words-number" type="range" min="1" max="8" step="1">
+                <div class="slider-value">
+                    <span>5 mots</span>
+                </div>
+                <input id="words-number" type="range" min="1" value="5" max="8" step="1">
             </div>
 
             <div class="invite-game">

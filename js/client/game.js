@@ -7,11 +7,14 @@ const {
     setNumberPlayer,
     setPoints,
     setWords,
-    updateWordUsers
+    updateWordUsers,
+    updateSliders
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
+const GameFactory = require('../factories/GameFactory')
 const RF = new RoomFactory();
+const GF = new GameFactory()
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -21,12 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const uuid = getCookie("uuid");
     const code = getCookie("code")
 
-    var link = `pronobot.top:3000/join?${code}`;
+    var link = `localhost:3000/join?${code}`;
 
     var room
     var game
     var user
     var userGS
+
+    var PLAYING = false;
 
     /**
      * Quand un client arrive sur cette page (/game)
@@ -49,14 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
+        updateSliders(game.getDuration(), game.getWordAmount())
 
         setPlayerColor(user.getInfo().color);
-        setTimer(game.getTimeLeftFormated())
+        setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
-
-
     });
+
+
 
     /**
      * Show Link Button
@@ -114,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameSection.classList.toggle('hidden');
 
         setWords(game.getWords())
+        PLAYING = true
     });
 
 
@@ -126,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         // Si le status de la game n'est pas 'PLAYING'
-        if (game.getStatus() !== 'PLAYING') return
+        if (game.getStatus() !== 'PLAYING' && !PLAYING) return
 
         // Si la touche pressé est BackSpace (suppr)
         if (e.keyCode === 8 && input_user.length > 0) {
@@ -137,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Si la touche pressé est Enter
         if (e.keyCode === 13 && input_user.length > 0) {
             const word_final = document.getElementById('player-input').getAttribute('value');
-            socket.emit('word-finish', code, word_final.toLowerCase(), uuid);
+            socket.emit('press_enter', code, word_final.toLowerCase(), input_user, uuid);
         }
 
         // Si la touche pressé est un caratères inclus dans char
@@ -156,14 +163,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setWords(game.getWords())
         updateWordUsers(game.getWords())
+        //setTimer(game.getTimeLeftFormated())
     })
 
-    socket.on('word_finish', (uuid_finisher, word_finish) => {
-        if (uuid_finisher === uuid) {
+    socket.on('word_finish', (win_info, serial_room) => {
+        room = RF.getFromSocket(serial_room)
+        game = room.getGame()
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        updatePlayerList(game, room.getUsers(), win_info)
+        setWords(game.getWords())
+
+        if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
             input_user = []
+            setPoints(userGS.getScore())
         }
     });
+
+    socket.on('update_time', (time) => {
+        setTimer(time)
+    });
+
+    socket.on('game_finish', (serial_game) => {
+        game = GF.getFromSocket(serial_game);
+        room.setGame(game)
+
+        console.log(game.getScoreBoard(), game.getStatus())
+
+        PLAYING = false;
+    })
 })
 
 /**

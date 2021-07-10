@@ -26,11 +26,6 @@ body.new_game .new-game-wrapper > p {
     text-align: center;
 }
 
-body.new_game .new-game-wrapper .game-duration,
-body.new_game .new-game-wrapper .words-number {
-    display: flex;
-    flex-direction: column;
-}
 body.new_game .new-game-wrapper .game-duration {
     margin-bottom: 2rem;
 }
@@ -38,12 +33,7 @@ body.new_game .new-game-wrapper .game-duration {
 body.new_game .new-game-wrapper .words-number {
     margin-bottom: 2.5rem;
 }
-body.new_game label {
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: var(--color_word_font_fill)
-}
+
 body.new_game .new-game-wrapper .last-line {
     display: flex;
     justify-content: space-between;

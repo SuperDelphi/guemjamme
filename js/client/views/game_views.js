@@ -1,4 +1,4 @@
-const updatePlayerList = (game, users) => {
+const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sign: 0}) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
@@ -9,13 +9,9 @@ const updatePlayerList = (game, users) => {
         sortable.push([users[key], gameStat.getScore()]);
     }
 
-    /*console.log(sortable)
-
-    sortable[1][1] = 54
-
     sortable.sort((a,b) => {
-        return a[1] - b[1];
-    });*/
+        return b[1] - a[1];
+    });
 
     sortable.forEach(user => {
 
@@ -24,17 +20,44 @@ const updatePlayerList = (game, users) => {
         const avatar = user[0].getInfo().avatar;
         const gameStat = game.getUserGameStats(user[0].getUUID());
 
-        //console.log(gameStat.getScore(), gameStat.getMultiplier())
+        /*if (user[0].getUUID() === win_info.uuid) {
+            const pts = win_info.pts
+            const word = win_info.word.word
+            const signe = win_info.sign
 
+            playerList.innerHTML += `
+                <div id="${user[0].getUUID()}" class="player_box color-${color}">
+                    <div class="player-picture">
+                        <img src="${avatar}" alt="Image du joueur">
+                        <div class="points-won ">
+                            <p>${word}</p>
+                            <div class="add-point">
+                                <p>${signe}</p>
+                                <p>${pts}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="player-infos hidden">
+                        <p class="player-name">${name}</p>
+            
+                        <div class="player-score">
+                            <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
+                            <p class="player-points-title">pts</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        }*/
         playerList.innerHTML += `
-            <div class="player_box color-${color}">
+            <div id="${user[0].getUUID()}" class="player_box color-${color}">
                 <div class="player-picture">
                     <img src="${avatar}" alt="Image du joueur">
                     <div class="points-won hidden">
-                        <p>Icarudazdazdazda</p>
+                        <p></p>
                         <div class="add-point">
-                            <p>+</p>
-                            <p>56</p>
+                            <p></p>
+                            <p></p>
                         </div>
                     </div>
                 </div>
@@ -49,6 +72,7 @@ const updatePlayerList = (game, users) => {
                 </div>
             </div>
         `
+
     });
 }
 
@@ -83,7 +107,6 @@ function setPoints(points) {
 function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     wordsSection.innerHTML = ''
-    console.log(words)
     for (const key in words) {
         wordsSection.innerHTML += `
             <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
@@ -109,6 +132,33 @@ function updateWordUsers(words) {
     }
 }
 
+function updateSliders(time, words) {
+    const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
+    const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
+
+    const gameDurationInputSlider = document.querySelector('.game-duration.range input')
+    const wordsNumberInputSlider = document.querySelector('.words-number.range input')
+
+
+    gameDurationInputSlider.value = time
+    gameDurationSliderValue.textContent = `${time} sec.`
+    gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
+
+
+    wordsNumberInputSlider.value = words
+    let add = 6.428571428571429
+    wordsNumberSliderValue.textContent = `${words} mots`
+    wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
+
+    gameDurationInputSlider.oninput = (() => {
+        updateSliders(time, words)
+    });
+
+    wordsNumberInputSlider.oninput = (() => {
+        updateSliders(time, words)
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
@@ -116,5 +166,6 @@ module.exports = {
     setNumberPlayer,
     setPoints,
     setWords,
-    updateWordUsers
+    updateWordUsers,
+    updateSliders
 }

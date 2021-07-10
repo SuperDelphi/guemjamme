@@ -72,6 +72,8 @@ io.on('connection', socket => {
         global.rooms[code] = room;
         global.users.push(uuid, socket, code)
 
+        console.log(`New room - CODE : ${code}, owner : {uuid: ${uuid}, name: ${name}}, preferences : ${JSON.stringify(preferences)}`)
+
         socket.join(code);
         socket.emit('success_host_room', code, uuid);
     });
@@ -123,7 +125,6 @@ io.on('connection', socket => {
         global.rooms[code].addUser(newUser);
         global.users.push(uuid, socket, code)
 
-        socket.join(code);
         socket.emit('created_user', code, uuid);
     });
 
@@ -140,6 +141,7 @@ io.on('connection', socket => {
 
         global.rooms[code].setGame(game)
 
+
         socket.join(code);
         io.sockets.in(code).emit('new_join', global.rooms[code]);
     })
@@ -150,14 +152,14 @@ io.on('connection', socket => {
     socket.on('start_game', (code) => {
         const game = global.rooms[code].getGame();
 
-        // Start the game by changing the status
-        game.startGame();
-
         genWords(game);
+
+        console.log(game.getStatus())
+        // Start the game by changing the status
+        game.startGame(io);
         console.log(game.getStatus())
 
         global.rooms[code].setGame(game)
-
 
         socket.join(code);
         io.sockets.in(code).emit('game_started', global.rooms[code])
@@ -174,7 +176,6 @@ io.on('connection', socket => {
         const user = global.rooms[code].getUsers()[uuid]
         const words = game.getWords()
 
-        var i = 0
 
         for (const key in words) {
             let w = words[key]
@@ -184,34 +185,74 @@ io.on('connection', socket => {
             } else {
                 w.removeUser(uuid)
             }
-
-            if (w.equalWord(word_input)) {
-                delete words[key]
-                words[key] = genSingleWord(game)
-
-                io.sockets.in(code).emit('word_finish', uuid, words[key])
-            }
         }
-        /*words.forEach(word => {
-
-            if (word.include(word_input)) {
-                word.addUser(uuid, user.getInfo().color);
-            }
-            if (word.equalWord(word_input)) {
-
-
-
-                //io.sockets.in(code).emit('word_finish', uuid, word)
-            }
-            else word.removeUser(uuid)
-            i++
-        });*/
 
         game.setWords(words);
         global.rooms[code].setGame(game)
 
-        socket.join(code)
+        socket.join(code);
         io.sockets.in(code).emit('update_letter', global.rooms[code])
+    });
+
+
+    socket.on('press_enter', (code, word_input, letters, uuid) => {
+        const game = global.rooms[code].getGame()
+        const user = global.rooms[code].getUsers()[uuid]
+        const words = game.getWords()
+
+        const verifyW = []
+        let word_final
+
+        for (const key in words) {
+            if (words[key].equalWord(word_input)) {
+                word_final = words[key]
+                delete words[key]
+                words[key] = genSingleWord(game)
+                verifyW.push('o')
+            } else {
+                verifyW.push('x')
+            }
+        }
+
+        let GS = game.getUserGameStats(uuid);
+        switch (user.getCombos()) {
+            case 0:
+                GS.setMultiplier(1)
+                break
+            case 1:
+                GS.setMultiplier(1.5)
+                break
+            case 2:
+                GS.setMultiplier(2)
+                break
+            case 3:
+                GS.setMultiplier(2.5)
+                break
+            case 4:
+                GS.setMultiplier(3)
+                break
+        }
+
+
+        let pts = Math.floor(letters.length/2)
+        let signe = '-'
+        if (verifyW.includes('o')) {
+            pts = letters.length
+            signe = '+'
+            user.addCombos();
+            GS.addPoints(pts)
+        } else {
+            user.resetCombos()
+            GS.removePoints(pts)
+        }
+
+        const win_info = {uuid: uuid, pts: pts, word: word_final, sign: signe}
+
+        game.setWords(words);
+
+        global.rooms[code].setGame(game)
+        socket.join(code);
+        io.sockets.in(code).emit('word_finish', win_info, global.rooms[code])
     });
 
 

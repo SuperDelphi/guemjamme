@@ -7,7 +7,6 @@ class Word {
     users = {}
 
     constructor(word, position) {
-        console.log(word)
         this.word = word;
         this.length = word.length
         this.letters = word.split('');

@@ -13,8 +13,10 @@ class Game {
     users
     duration
     endtime
+    startTime
     timeleft
     wordAmount
+    socket
 
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
@@ -22,16 +24,27 @@ class Game {
         this.words = {};
 
         this.duration =  duration;
-        this.endtime = Date.now() + 1000 * this.duration;
-        this.timeleft = this.endtime - Date.now();
-
         this.wordAmount = wordAmount;
 
         this.users = {}
     }
 
-    startGame = () => {
+    startGame = (io) => {
         this.status = Status.PLAYING;
+
+        this.startTime = Date.now();
+        this.endtime = this.startTime + (1000 *  this.duration)
+        console.log('startTime', this.startTime)
+
+        var interval = setInterval(() => {
+            console.log(Date.now() - this.startTime)
+            if (Date.now() - this.startTime > this.duration * 1000) {
+                clearInterval(interval)
+                this.status = Status.ENDED;
+                return io.sockets.in(this.roomCode).emit('game_finish', this);
+            }
+            this.updateTimeLeft(io)
+        }, 1000);
     }
 
     setWords = (words) => {
@@ -56,6 +69,10 @@ class Game {
         return this.wordAmount;
     }
 
+    getDuration = () => {
+        return this.duration
+    }
+
     getUserGameStats = (uuid) => {
         return this.users[uuid];
     }
@@ -68,13 +85,34 @@ class Game {
         this.users = users;
     }
 
+    updateTimeLeft = (io) => {
+        this.timeleft = this.endtime - Date.now()
+        io.sockets.in(this.roomCode).emit('update_time', this.getTimeLeftFormated())
+    }
+
     getTimeLeft = () => {
         return this.timeleft;
+    }
+
+    setTimeLeft = (timeleft) => {
+        this.timeleft = timeleft
     }
 
     getTimeLeftFormated = () => {
         let seconds = Math.floor((this.timeleft / 1000) % 60);
         let minutes = Math.floor((this.timeleft / (1000 * 60)) % 60);
+
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        if (this.timeleft < 1000) return `00:00`;
+
+        return `${minutes}:${seconds}`
+    }
+
+    getDurationFormated = () => {
+        let seconds = Math.floor(this.duration % 60);
+        let minutes = Math.floor((this.duration - seconds) / 60);
 
         minutes = (minutes < 10) ? "0" + minutes : minutes;
         seconds = (seconds < 10) ? "0" + seconds : seconds;
@@ -96,6 +134,20 @@ class Game {
     setStatus = (status) => {
         this.status = status;
     };
+
+    getScoreBoard = () => {
+        let sortable = [];
+        for (const key in this.users) {
+            const gameStat = this.getUserGameStats(key);
+            sortable.push([this.users[key], gameStat.getScore()]);
+        }
+
+        sortable.sort((a,b) => {
+            return b[1] - a[1];
+        });
+
+        return sortable
+    }
 }
 
 module.exports = Game;

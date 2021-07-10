@@ -1,5 +1,5 @@
 const {} = require('../functions')
-const {setDefaultPseudo} = require('../client/views/index_views');
+const {setDefaultPseudo, updateSliders} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
 const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
     setDefaultPseudo(randomPseudo())
+    updateSliders()
 
     let new_avatar = genRandomAvatar();
     document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)

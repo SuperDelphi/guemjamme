@@ -2222,13 +2222,12 @@ class Word {
         this.position = position;
     }
 
-    addUser = (uuid, letter) => {
-        if (this.users[uuid]) this.users[uuid] = []
-        this.users[uuid].push(letter);
+    addUser = (uuid, color) => {
+       if (!this.users[uuid]) this.users[uuid] = color;
     }
 
     removeUser = (uuid) => {
-        this.users.remove(uuid)
+        if (this.users[uuid]) delete this.users[uuid]
     }
 
     getUsers = () => {
@@ -2251,8 +2250,12 @@ class Word {
         return this.position;
     }
 
-    includeLetter = (letter) => {
-        return this.letters.includes(letter);
+    include = (word_input) => {
+
+        let letters_input = word_input.split('')
+        let inputSize = word_input.length
+        let letters = this.letters.slice(0,inputSize)
+        return arraysEqual(letters, letters_input)
     }
 
     equalWord = (word) => {
@@ -2260,10 +2263,20 @@ class Word {
     }
 }
 
+function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
 module.exports = Word
 },{}],7:[function(require,module,exports){
 const {} = require('../functions')
-const {setDefaultPseudo} = require('../client/views/index_views');
+const {setDefaultPseudo, updateSliders} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
 const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
@@ -2272,6 +2285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
     setDefaultPseudo(randomPseudo())
+    updateSliders()
 
     let new_avatar = genRandomAvatar();
     document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
@@ -2333,8 +2347,30 @@ function setDefaultPseudo(pseudo) {
     name.setAttribute('value', pseudo);
 }
 
+function updateSliders() {
+    const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
+    const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
+
+    const gameDurationInputSlider = document.querySelector('.game-duration.range input')
+    const wordsNumberInputSlider = document.querySelector('.words-number.range input')
+
+    gameDurationInputSlider.oninput = (() => {
+        let value = gameDurationInputSlider.value
+        gameDurationSliderValue.textContent = `${value} sec.`
+        gameDurationSliderValue.style.left = (value*60 / 150) + 3 + '%'
+    });
+
+    wordsNumberInputSlider.oninput = (() => {
+        let value = wordsNumberInputSlider.value
+        let add = 6.428571428571429
+        wordsNumberSliderValue.textContent = `${value} mots`
+        wordsNumberSliderValue.style.left = (value * 60 / 7) + add + '%'
+    });
+}
+
 module.exports = {
-    setDefaultPseudo
+    setDefaultPseudo,
+    updateSliders
 }
 },{}],9:[function(require,module,exports){
 (function (global,__dirname){(function (){
@@ -2397,9 +2433,6 @@ const randomPseudo = () => {
 }
 
 function genWords(game) {
-    const wordsTXT = fs.readFileSync(__dirname + '/words.txt', {encoding: "utf8", flag: 'r'})
-
-    const words = wordsTXT.split(' ');
 
     const finalWords = []
     let coords = []
@@ -2410,9 +2443,9 @@ function genWords(game) {
             posRandom = Math.floor(Math.random() * (8 - 1) +1)
         }
 
-        let word = words[Math.floor(Math.random() * words.length)]
+        let word = randomWord()
         while (firstLetters.includes(word.charAt(0))) {
-            word = words[Math.floor(Math.random() * words.length)]
+            word = randomWord()
         }
 
         firstLetters.push(word.charAt(0))
@@ -2427,6 +2460,36 @@ function genWords(game) {
     game.setWords(finalWords);
 }
 
+const genSingleWord = (game) => {
+
+    let word = randomWord()
+    let position = Math.floor(Math.random() * (8 - 1) +1)
+
+    const firsLetter = []
+    const pos = []
+    for (const key in game.getWords()) {
+        firsLetter.push(game.getWords()[key].getWord().charAt(0))
+        pos.push(game.getWords()[key].getPosition())
+    }
+
+    while (firsLetter.includes(word.charAt(0))) {
+        word = randomWord()
+    }
+
+    while (pos.includes(position)) {
+        position = Math.floor(Math.random() * (8 - 1) +1);
+    }
+
+    return new Word(word, position)
+}
+
+
+const randomWord = () => {
+    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\r\n');
+    return words[Math.floor(Math.random() * words.length)]
+}
+
 module.exports = {
     roomCode,
     codeExists,
@@ -2435,7 +2498,8 @@ module.exports = {
     genRandomAvatar,
     capitalize,
     randomPseudo,
-    genWords
+    genWords,
+    genSingleWord
 };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/..")
 },{"./classe/Word":6,"fs":1}],10:[function(require,module,exports){

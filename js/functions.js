@@ -109,7 +109,7 @@ const genSingleWord = (game) => {
 
 
 const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname + '/words/fr.txt', {encoding: "utf8", flag: 'r'})
+    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
     const words = wordsTXT.split('\r\n');
     return words[Math.floor(Math.random() * words.length)]
 }

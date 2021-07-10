@@ -2222,8 +2222,10 @@ class Game {
     users
     duration
     endtime
+    startTime
     timeleft
     wordAmount
+    socket
 
     constructor(roomCode, duration, wordAmount) {
         this.roomCode = roomCode;
@@ -2231,16 +2233,27 @@ class Game {
         this.words = {};
 
         this.duration =  duration;
-        this.endtime = Date.now() + 1000 * this.duration;
-        this.timeleft = this.endtime - Date.now();
-
         this.wordAmount = wordAmount;
 
         this.users = {}
     }
 
-    startGame = () => {
+    startGame = (io) => {
         this.status = Status.PLAYING;
+
+        this.startTime = Date.now();
+        this.endtime = this.startTime + (1000 *  this.duration)
+        console.log('startTime', this.startTime)
+
+        var interval = setInterval(() => {
+            console.log(Date.now() - this.startTime)
+            if (Date.now() - this.startTime > this.duration * 1000) {
+                clearInterval(interval)
+                this.status = Status.ENDED;
+                return io.sockets.in(this.roomCode).emit('game_finish', this);
+            }
+            this.updateTimeLeft(io)
+        }, 1000);
     }
 
     setWords = (words) => {
@@ -2265,6 +2278,10 @@ class Game {
         return this.wordAmount;
     }
 
+    getDuration = () => {
+        return this.duration
+    }
+
     getUserGameStats = (uuid) => {
         return this.users[uuid];
     }
@@ -2277,13 +2294,36 @@ class Game {
         this.users = users;
     }
 
+    updateTimeLeft = (io) => {
+        this.timeleft = this.endtime - Date.now()
+        io.sockets.in(this.roomCode).emit('update_time', this.getTimeLeftFormated())
+    }
+
     getTimeLeft = () => {
         return this.timeleft;
+    }
+
+    setTimeLeft = (timeleft) => {
+        this.timeleft = timeleft
     }
 
     getTimeLeftFormated = () => {
         let seconds = Math.floor((this.timeleft / 1000) % 60);
         let minutes = Math.floor((this.timeleft / (1000 * 60)) % 60);
+
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        if (this.timeleft < 1000) return `00:00`;
+
+        return `${minutes}:${seconds}`
+    }
+
+    getDurationFormated = () => {
+        let seconds = Math.floor(this.duration % 60);
+        let minutes = Math.floor((this.duration - seconds) / 60);
+
+        console.log(seconds, minutes, (this.duration - seconds) / 60)
 
         minutes = (minutes < 10) ? "0" + minutes : minutes;
         seconds = (seconds < 10) ? "0" + seconds : seconds;
@@ -2305,6 +2345,20 @@ class Game {
     setStatus = (status) => {
         this.status = status;
     };
+
+    getScoreBoard = () => {
+        let sortable = [];
+        for (const key in this.users) {
+            const gameStat = this.getUserGameStats(key);
+            sortable.push([this.users[key], gameStat.getScore()]);
+        }
+
+        sortable.sort((a,b) => {
+            return b[1] - a[1];
+        });
+
+        return sortable
+    }
 }
 
 module.exports = Game;
@@ -2335,7 +2389,11 @@ class GameStats {
     }
 
     addPoints = (points) => {
-        this.score += points;
+        this.score += Math.floor(points * this.multiplier);
+    }
+
+    removePoints = (points) => {
+        this.score -= points;
     }
 
     addMultiplier = (coeff) => {
@@ -2429,12 +2487,30 @@ class User {
     name
     color
     avatar
+    combos
 
     constructor(uuid, name, color, avatar) {
         this.uuid = uuid;
         this.name = name;
         this.color = color;
         this.avatar = avatar;
+        this.resetCombos();
+    }
+
+    resetCombos = () => {
+        this.combos = 0;
+    }
+
+    addCombos = () => {
+        this.combos += 1
+    }
+
+    getCombos = () => {
+        return this.combos;
+    }
+
+    setCombos = (combos) => {
+        this.combos = combos;
     }
 
     getUUID = () => {
@@ -2466,7 +2542,6 @@ class Word {
     users = {}
 
     constructor(word, position) {
-        console.log(word)
         this.word = word;
         this.length = word.length
         this.letters = word.split('');
@@ -2535,11 +2610,14 @@ const {
     setNumberPlayer,
     setPoints,
     setWords,
-    updateWordUsers
+    updateWordUsers,
+    updateSliders
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
+const GameFactory = require('../factories/GameFactory')
 const RF = new RoomFactory();
+const GF = new GameFactory()
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -2549,12 +2627,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const uuid = getCookie("uuid");
     const code = getCookie("code")
 
-    var link = `pronobot.top:3000/join?${code}`;
+    var link = `localhost:3000/join?${code}`;
 
     var room
     var game
     var user
     var userGS
+
+    var PLAYING = false;
 
     /**
      * Quand un client arrive sur cette page (/game)
@@ -2577,14 +2657,16 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
+        updateSliders(game.getDuration(), game.getWordAmount())
 
         setPlayerColor(user.getInfo().color);
-        setTimer(game.getTimeLeftFormated())
+        console.log(game.getDurationFormated(), game.getDuration())
+        setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
-
-
     });
+
+
 
     /**
      * Show Link Button
@@ -2642,6 +2724,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameSection.classList.toggle('hidden');
 
         setWords(game.getWords())
+        PLAYING = true
     });
 
 
@@ -2654,7 +2737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         // Si le status de la game n'est pas 'PLAYING'
-        if (game.getStatus() !== 'PLAYING') return
+        if (game.getStatus() !== 'PLAYING' && !PLAYING) return
 
         // Si la touche pressé est BackSpace (suppr)
         if (e.keyCode === 8 && input_user.length > 0) {
@@ -2665,7 +2748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Si la touche pressé est Enter
         if (e.keyCode === 13 && input_user.length > 0) {
             const word_final = document.getElementById('player-input').getAttribute('value');
-            socket.emit('word-finish', code, word_final.toLowerCase(), uuid);
+            socket.emit('press_enter', code, word_final.toLowerCase(), input_user, uuid);
         }
 
         // Si la touche pressé est un caratères inclus dans char
@@ -2684,14 +2767,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setWords(game.getWords())
         updateWordUsers(game.getWords())
+        //setTimer(game.getTimeLeftFormated())
     })
 
-    socket.on('word_finish', (uuid_finisher, word_finish) => {
-        if (uuid_finisher === uuid) {
+    socket.on('word_finish', (win_info, serial_room) => {
+        room = RF.getFromSocket(serial_room)
+        game = room.getGame()
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        updatePlayerList(game, room.getUsers(), win_info)
+        setWords(game.getWords())
+
+        if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
             input_user = []
+            setPoints(userGS.getScore())
         }
     });
+
+    socket.on('update_time', (time) => {
+        console.log(game.getStatus())
+        setTimer(time)
+    });
+
+    socket.on('game_finish', (serial_game) => {
+        game = GF.getFromSocket(serial_game);
+        room.setGame(game)
+
+        console.log(game.getScoreBoard(), game.getStatus())
+
+        PLAYING = false;
+    })
 })
 
 /**
@@ -2710,8 +2817,8 @@ const updateRoom = (socket, code, room) => {
         });
     });
 }
-},{"../factories/RoomFactory":15,"../functions":17,"./views/game_views":12,"socket.io-client":43}],12:[function(require,module,exports){
-const updatePlayerList = (game, users) => {
+},{"../factories/GameFactory":13,"../factories/RoomFactory":15,"../functions":17,"./views/game_views":12,"socket.io-client":43}],12:[function(require,module,exports){
+const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sign: 0}) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
@@ -2722,13 +2829,9 @@ const updatePlayerList = (game, users) => {
         sortable.push([users[key], gameStat.getScore()]);
     }
 
-    /*console.log(sortable)
-
-    sortable[1][1] = 54
-
     sortable.sort((a,b) => {
-        return a[1] - b[1];
-    });*/
+        return b[1] - a[1];
+    });
 
     sortable.forEach(user => {
 
@@ -2737,17 +2840,44 @@ const updatePlayerList = (game, users) => {
         const avatar = user[0].getInfo().avatar;
         const gameStat = game.getUserGameStats(user[0].getUUID());
 
-        //console.log(gameStat.getScore(), gameStat.getMultiplier())
+        /*if (user[0].getUUID() === win_info.uuid) {
+            const pts = win_info.pts
+            const word = win_info.word.word
+            const signe = win_info.sign
 
+            playerList.innerHTML += `
+                <div id="${user[0].getUUID()}" class="player_box color-${color}">
+                    <div class="player-picture">
+                        <img src="${avatar}" alt="Image du joueur">
+                        <div class="points-won ">
+                            <p>${word}</p>
+                            <div class="add-point">
+                                <p>${signe}</p>
+                                <p>${pts}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="player-infos hidden">
+                        <p class="player-name">${name}</p>
+            
+                        <div class="player-score">
+                            <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
+                            <p class="player-points-title">pts</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        }*/
         playerList.innerHTML += `
-            <div class="player_box color-${color}">
+            <div id="${user[0].getUUID()}" class="player_box color-${color}">
                 <div class="player-picture">
                     <img src="${avatar}" alt="Image du joueur">
                     <div class="points-won hidden">
-                        <p>Icarudazdazdazda</p>
+                        <p></p>
                         <div class="add-point">
-                            <p>+</p>
-                            <p>56</p>
+                            <p></p>
+                            <p></p>
                         </div>
                     </div>
                 </div>
@@ -2762,6 +2892,7 @@ const updatePlayerList = (game, users) => {
                 </div>
             </div>
         `
+
     });
 }
 
@@ -2796,7 +2927,6 @@ function setPoints(points) {
 function setWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     wordsSection.innerHTML = ''
-    console.log(words)
     for (const key in words) {
         wordsSection.innerHTML += `
             <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
@@ -2822,6 +2952,33 @@ function updateWordUsers(words) {
     }
 }
 
+function updateSliders(time, words) {
+    const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
+    const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
+
+    const gameDurationInputSlider = document.querySelector('.game-duration.range input')
+    const wordsNumberInputSlider = document.querySelector('.words-number.range input')
+
+
+    gameDurationInputSlider.value = time
+    gameDurationSliderValue.textContent = `${time} sec.`
+    gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
+
+
+    wordsNumberInputSlider.value = words
+    let add = 6.428571428571429
+    wordsNumberSliderValue.textContent = `${words} mots`
+    wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
+
+    gameDurationInputSlider.oninput = (() => {
+        updateSliders(time, words)
+    });
+
+    wordsNumberInputSlider.oninput = (() => {
+        updateSliders(time, words)
+    });
+}
+
 module.exports = {
     updatePlayerList,
     setPlayerColor,
@@ -2829,7 +2986,8 @@ module.exports = {
     setNumberPlayer,
     setPoints,
     setWords,
-    updateWordUsers
+    updateWordUsers,
+    updateSliders
 }
 },{}],13:[function(require,module,exports){
 const Game = require('../classe/Game');
@@ -2850,7 +3008,6 @@ class GameFactory {
 
         let words = []
         for (const word in game.words) {
-            console.log(word)
             const w = new Word(game.words[word].word, game.words[word].position)
 
             Object.keys(game.words[word].users).forEach(uuid => {
@@ -2869,6 +3026,8 @@ class GameFactory {
             words.push(w)
         });*/
         g.setWords(words)
+
+        g.setTimeLeft(game.timeleft)
 
         for (const k in game.users) {
             g.addUser(k, GSF.getFromSocket(game.users[k]));
@@ -2925,12 +3084,15 @@ const User = require("../classe/User");
 
 class UserFactory {
     getFromSocket = user => {
-        return new User(
+        const u = new User(
             user.uuid,
             user.name,
             user.color,
             user.avatar
         );
+
+        u.setCombos(user.combos);
+        return u
     }
 }
 
@@ -3048,7 +3210,7 @@ const genSingleWord = (game) => {
 
 
 const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname + '/words/fr.txt', {encoding: "utf8", flag: 'r'})
+    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
     const words = wordsTXT.split('\r\n');
     return words[Math.floor(Math.random() * words.length)]
 }

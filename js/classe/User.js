@@ -3,12 +3,30 @@ class User {
     name
     color
     avatar
+    combos
 
     constructor(uuid, name, color, avatar) {
         this.uuid = uuid;
         this.name = name;
         this.color = color;
         this.avatar = avatar;
+        this.resetCombos();
+    }
+
+    resetCombos = () => {
+        this.combos = 0;
+    }
+
+    addCombos = () => {
+        this.combos += 1
+    }
+
+    getCombos = () => {
+        return this.combos;
+    }
+
+    setCombos = (combos) => {
+        this.combos = combos;
     }
 
     getUUID = () => {

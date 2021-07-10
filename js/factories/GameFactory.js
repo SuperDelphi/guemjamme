@@ -16,7 +16,6 @@ class GameFactory {
 
         let words = []
         for (const word in game.words) {
-            console.log(word)
             const w = new Word(game.words[word].word, game.words[word].position)
 
             Object.keys(game.words[word].users).forEach(uuid => {
@@ -35,6 +34,8 @@ class GameFactory {
             words.push(w)
         });*/
         g.setWords(words)
+
+        g.setTimeLeft(game.timeleft)
 
         for (const k in game.users) {
             g.addUser(k, GSF.getFromSocket(game.users[k]));
