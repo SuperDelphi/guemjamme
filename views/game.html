@@ -27,24 +27,26 @@
         <form class="settings">
             <p>PREFERENCES DE PARTIE</p>
 
-            <div class="game-duration range">
-                <label for="game_duration">Durée de la partie</label>
+            <div class="game-duration">
+                <p>Durée de la partie : <span>60 sec.</span></p>
+                <!--<label for="game_duration">Durée de la partie</label>
                 <div class="slider-value">
                     <span>60 sec.</span>
                 </div>
-                <input id="game_duration" type="range" value="60" min="30" max="180" step="10">
+                <input id="game_duration" type="range" value="60" min="30" max="180" step="10">-->
             </div>
 
-            <div class="words-number range">
-                <label for="words-number">Mots affichés en même temps</label>
+            <div class="words-number">
+                <p>Mots affichés en même temps : <span>5 mots</span></p>
+                <!--<label for="words-number">Mots affichés en même temps</label>
                 <div class="slider-value">
                     <span>5 mots</span>
                 </div>
-                <input id="words-number" type="range" min="1" value="5" max="8" step="1">
+                <input id="words-number" type="range" min="1" value="5" max="8" step="1">-->
             </div>
 
             <div class="invite-game">
-                <label for="words-number">Invite tes amis à jouer !</label>
+                <label for="link">Invite tes amis à jouer !</label>
 
                 <div class="copy_link">
                     <p id="show-link">VOIR LE LIEN</p>
@@ -86,6 +88,32 @@
                 <p class="points-title">pts</p>
             </div>
         </div>
+    </div>
+
+    <div class="result-section hidden">
+        <div class="scoreboard">
+        </div>
+        <form class="settings">
+            <p>PREFERENCES DE PARTIE</p>
+
+            <div class="game-duration range">
+                <label for="new_game_duration">Durée de la partie</label>
+                <div class="slider-value">
+                    <span>60 sec.</span>
+                </div>
+                <input id="new_game_duration" type="range" value="60" min="30" max="180" step="10">
+            </div>
+
+            <div class="words-number range">
+                <label for="new_words-number">Mots affichés en même temps</label>
+                <div class="slider-value">
+                    <span>5 mots</span>
+                </div>
+                <input id="new_words-number" type="range" min="1" value="5" max="8" step="1">
+            </div>
+
+            <input id="restart_game" type="button" value="Relancer la partie !">
+        </form>
     </div>
 </section>
 

@@ -12,13 +12,15 @@ const Room = require('./js/classe/Room');
 const Game = require('./js/classe/Game');
 
 const RoomFactory = require('./js/factories/RoomFactory');
-const {genSingleWord} = require("./js/functions");
+const GameFactory = require('./js/factories/GameFactory');
 const RF = new RoomFactory();
+const GF = new RoomFactory();
 
 const {
     roomCode,
     codeExists,
-    genWords
+    genWords,
+    genSingleWord
 } = require('./js/functions');
 
 global.rooms = {}
@@ -141,7 +143,6 @@ io.on('connection', socket => {
 
         global.rooms[code].setGame(game)
 
-
         socket.join(code);
         io.sockets.in(code).emit('new_join', global.rooms[code]);
     })
@@ -170,12 +171,11 @@ io.on('connection', socket => {
      */
     socket.on('input', (code, word_input, letters, uuid) => {
 
-        console.log(code, word_input, letters, uuid)
+        //console.log(code, word_input, letters, uuid)
 
         const game = global.rooms[code].getGame()
         const user = global.rooms[code].getUsers()[uuid]
         const words = game.getWords()
-
 
         for (const key in words) {
             let w = words[key]
@@ -255,11 +255,23 @@ io.on('connection', socket => {
         io.sockets.in(code).emit('word_finish', win_info, global.rooms[code])
     });
 
+    socket.on('restart_game', (code, serial_game) => {
+        console.log(serial_game)
+        const newGame = new Game(code, serial_game.duration, serial_game.wordAmount)
+        for (const key in serial_game.users) {
+            newGame.addUser(key);
+        }
+        global.rooms[code].setGame(newGame)
+        console.log(global.rooms[code])
+
+        socket.join(code)
+        io.sockets.in(code).emit('game_restarted', global.rooms[code])
+    });
 
     /**
      * Demande du client pour récupérer une room à jours
      */
-    socket.on('update_room', (code, room) => {
+    /*socket.on('update_room', (code, room) => {
         const pre_room = global.rooms[code];
         const new_room = RF.getFromSocket(room);
 
@@ -279,7 +291,7 @@ io.on('connection', socket => {
 
         socket.join(code);
         io.sockets.in(code).emit('updated_room', global.rooms[code]);
-    });
+    });*/
 
 
 

@@ -37,7 +37,6 @@ class Game {
         console.log('startTime', this.startTime)
 
         var interval = setInterval(() => {
-            console.log(Date.now() - this.startTime)
             if (Date.now() - this.startTime > this.duration * 1000) {
                 clearInterval(interval)
                 this.status = Status.ENDED;
@@ -147,6 +146,11 @@ class Game {
         });
 
         return sortable
+    }
+
+    setPreferences = (newTime, newWords) => {
+        this.duration = newTime;
+        this.wordAmount = newWords;
     }
 }
 

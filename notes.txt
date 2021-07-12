@@ -2,8 +2,6 @@ Principe:
 Jeu de saisie clavier de mot Latin
 sur un choix de mot afficher (5)
 
-
-
 Fonctionnalité:
 1v1 (+ plus tard)
     -> Lien d'invitation (room)/Code

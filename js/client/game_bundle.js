@@ -2246,7 +2246,6 @@ class Game {
         console.log('startTime', this.startTime)
 
         var interval = setInterval(() => {
-            console.log(Date.now() - this.startTime)
             if (Date.now() - this.startTime > this.duration * 1000) {
                 clearInterval(interval)
                 this.status = Status.ENDED;
@@ -2323,8 +2322,6 @@ class Game {
         let seconds = Math.floor(this.duration % 60);
         let minutes = Math.floor((this.duration - seconds) / 60);
 
-        console.log(seconds, minutes, (this.duration - seconds) / 60)
-
         minutes = (minutes < 10) ? "0" + minutes : minutes;
         seconds = (seconds < 10) ? "0" + seconds : seconds;
 
@@ -2358,6 +2355,11 @@ class Game {
         });
 
         return sortable
+    }
+
+    setPreferences = (newTime, newWords) => {
+        this.duration = newTime;
+        this.wordAmount = newWords;
     }
 }
 
@@ -2611,7 +2613,9 @@ const {
     setPoints,
     setWords,
     updateWordUsers,
-    updateSliders
+    updateSliders,
+    updatePreferences,
+    updateScoreBoard
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -2657,15 +2661,13 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updateSliders(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount())
 
         setPlayerColor(user.getInfo().color);
-        console.log(game.getDurationFormated(), game.getDuration())
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
     });
-
 
 
     /**
@@ -2717,11 +2719,15 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        const preferencesSection = document.querySelector('.settings-section');
-        const gameSection = document.querySelector('.game-section');
+        const resultSection = document.querySelector('.result-section');
+        const gameSection = document.querySelector('.game-section')
+        const playerList = document.querySelector('.players-list')
+        const preferencesSection = document.querySelector('.settings-section')
 
-        preferencesSection.classList.toggle('hidden');
-        gameSection.classList.toggle('hidden');
+        resultSection.classList.add('hidden');
+        gameSection.classList.remove('hidden')
+        playerList.classList.remove('hidden')
+        preferencesSection.classList.add('hidden')
 
         setWords(game.getWords())
         PLAYING = true
@@ -2767,7 +2773,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setWords(game.getWords())
         updateWordUsers(game.getWords())
-        //setTimer(game.getTimeLeftFormated())
     })
 
     socket.on('word_finish', (win_info, serial_room) => {
@@ -2778,6 +2783,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePlayerList(game, room.getUsers(), win_info)
         setWords(game.getWords())
+        updateWordUsers(game.getWords())
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -2787,7 +2793,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('update_time', (time) => {
-        console.log(game.getStatus())
         setTimer(time)
     });
 
@@ -2795,10 +2800,43 @@ document.addEventListener('DOMContentLoaded', () => {
         game = GF.getFromSocket(serial_game);
         room.setGame(game)
 
-        console.log(game.getScoreBoard(), game.getStatus())
-
         PLAYING = false;
+
+        const resultSection = document.querySelector('.result-section');
+        const gameSection = document.querySelector('.game-section')
+        const playerList = document.querySelector('.players-list')
+        const preferencesSection = document.querySelector('.settings-section')
+
+        resultSection.classList.remove('hidden');
+        gameSection.classList.add('hidden')
+        playerList.classList.add('hidden')
+        preferencesSection.classList.add('hidden')
+
+        updateSliders();
+        updateScoreBoard(game, room.getUsers())
+
+        console.log(game.getScoreBoard(), game.getStatus())
     })
+
+    const restartGameBtn = document.getElementById('restart_game')
+    restartGameBtn.addEventListener('click', () => {
+        const gameDuration = document.getElementById('new_game_duration').value;
+        const wordAmount = document.getElementById('new_words-number').value;
+
+        if (room.getOwner().getUUID() !== uuid) return;
+
+        game.setPreferences(gameDuration, wordAmount)
+
+        socket.emit('restart_game', code, game);
+    });
+
+    socket.on('game_restarted', (serial_room) => {
+        room = RF.getFromSocket(serial_room);
+        game = room.getGame();
+
+        console.log(room)
+        window.location.reload()
+    });
 })
 
 /**
@@ -2952,7 +2990,7 @@ function updateWordUsers(words) {
     }
 }
 
-function updateSliders(time, words) {
+function updateSliders() {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
 
@@ -2960,22 +2998,80 @@ function updateSliders(time, words) {
     const wordsNumberInputSlider = document.querySelector('.words-number.range input')
 
 
-    gameDurationInputSlider.value = time
-    gameDurationSliderValue.textContent = `${time} sec.`
-    gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
-
-
-    wordsNumberInputSlider.value = words
-    let add = 6.428571428571429
-    wordsNumberSliderValue.textContent = `${words} mots`
-    wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
-
     gameDurationInputSlider.oninput = (() => {
-        updateSliders(time, words)
+        //updateSliders(time, words)
+        let time = gameDurationInputSlider.value
+        gameDurationSliderValue.textContent = `${time} sec.`
+        gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
     });
 
     wordsNumberInputSlider.oninput = (() => {
-        updateSliders(time, words)
+        //updateSliders(time, words)
+        let words = wordsNumberInputSlider.value
+        let add = 6.428571428571429
+        wordsNumberSliderValue.textContent = `${words} mots`
+        wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
+
+    });
+}
+
+function updatePreferences(time, words) {
+    const gameDuration = document.querySelector('.game-duration p span')
+    const wordsNumber = document.querySelector('.words-number p span')
+
+    gameDuration.textContent = `${time} sec.`
+    wordsNumber.textContent = `${words} mots`
+}
+
+function updateScoreBoard(game, users) {
+    const playerList = document.querySelector('.scoreboard');
+
+    playerList.innerHTML = "";
+
+    let sortable = [];
+    for (const key in users) {
+        const gameStat = game.getUserGameStats(key);
+        sortable.push([users[key], gameStat.getScore()]);
+    }
+
+    sortable.sort((a,b) => {
+        return b[1] - a[1];
+    });
+
+    const bestScore = sortable[0][1]
+
+    let counter = 0;
+    sortable.forEach(user => {
+        const name = user[0].getName();
+        const color = user[0].getInfo().color;
+        const avatar = user[0].getInfo().avatar;
+        const gameStat = game.getUserGameStats(user[0].getUUID());
+
+        let classment = ''
+        switch (counter) {
+            case 0:
+                classment = 'first'
+                break
+            case 1:
+                classment = 'second'
+                break
+            case 2:
+                classment = 'third'
+                break
+        }
+
+        playerList.innerHTML += `
+            <div class="player-container ${classment} color-${color}">
+                <div class="charte" style="height: ${gameStat.getScore()/bestScore * 100}%">
+                    <img src="${avatar}"  alt="Avatar du Joueur">
+                    <div class="bar"></div>
+                    <p class="points-final">${gameStat.getScore()} pts</p>
+                </div>
+                <span class="player_pseudo">${name}</span>
+                <span class="podium">#${counter + 1}</span>
+            </div>`
+
+        counter += 1;
     });
 }
 
@@ -2987,7 +3083,9 @@ module.exports = {
     setPoints,
     setWords,
     updateWordUsers,
-    updateSliders
+    updateSliders,
+    updatePreferences,
+    updateScoreBoard
 }
 },{}],13:[function(require,module,exports){
 const Game = require('../classe/Game');

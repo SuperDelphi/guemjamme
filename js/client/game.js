@@ -8,7 +8,9 @@ const {
     setPoints,
     setWords,
     updateWordUsers,
-    updateSliders
+    updateSliders,
+    updatePreferences,
+    updateScoreBoard
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -54,14 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updateSliders(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount())
 
         setPlayerColor(user.getInfo().color);
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
     });
-
 
 
     /**
@@ -113,11 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        const preferencesSection = document.querySelector('.settings-section');
-        const gameSection = document.querySelector('.game-section');
+        const resultSection = document.querySelector('.result-section');
+        const gameSection = document.querySelector('.game-section')
+        const playerList = document.querySelector('.players-list')
+        const preferencesSection = document.querySelector('.settings-section')
 
-        preferencesSection.classList.toggle('hidden');
-        gameSection.classList.toggle('hidden');
+        resultSection.classList.add('hidden');
+        gameSection.classList.remove('hidden')
+        playerList.classList.remove('hidden')
+        preferencesSection.classList.add('hidden')
 
         setWords(game.getWords())
         PLAYING = true
@@ -163,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setWords(game.getWords())
         updateWordUsers(game.getWords())
-        //setTimer(game.getTimeLeftFormated())
     })
 
     socket.on('word_finish', (win_info, serial_room) => {
@@ -174,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updatePlayerList(game, room.getUsers(), win_info)
         setWords(game.getWords())
+        updateWordUsers(game.getWords())
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -190,10 +195,43 @@ document.addEventListener('DOMContentLoaded', () => {
         game = GF.getFromSocket(serial_game);
         room.setGame(game)
 
-        console.log(game.getScoreBoard(), game.getStatus())
-
         PLAYING = false;
+
+        const resultSection = document.querySelector('.result-section');
+        const gameSection = document.querySelector('.game-section')
+        const playerList = document.querySelector('.players-list')
+        const preferencesSection = document.querySelector('.settings-section')
+
+        resultSection.classList.remove('hidden');
+        gameSection.classList.add('hidden')
+        playerList.classList.add('hidden')
+        preferencesSection.classList.add('hidden')
+
+        updateSliders();
+        updateScoreBoard(game, room.getUsers())
+
+        console.log(game.getScoreBoard(), game.getStatus())
     })
+
+    const restartGameBtn = document.getElementById('restart_game')
+    restartGameBtn.addEventListener('click', () => {
+        const gameDuration = document.getElementById('new_game_duration').value;
+        const wordAmount = document.getElementById('new_words-number').value;
+
+        if (room.getOwner().getUUID() !== uuid) return;
+
+        game.setPreferences(gameDuration, wordAmount)
+
+        socket.emit('restart_game', code, game);
+    });
+
+    socket.on('game_restarted', (serial_room) => {
+        room = RF.getFromSocket(serial_room);
+        game = room.getGame();
+
+        console.log(room)
+        window.location.reload()
+    });
 })
 
 /**

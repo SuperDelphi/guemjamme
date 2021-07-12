@@ -132,7 +132,7 @@ function updateWordUsers(words) {
     }
 }
 
-function updateSliders(time, words) {
+function updateSliders() {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
 
@@ -140,22 +140,80 @@ function updateSliders(time, words) {
     const wordsNumberInputSlider = document.querySelector('.words-number.range input')
 
 
-    gameDurationInputSlider.value = time
-    gameDurationSliderValue.textContent = `${time} sec.`
-    gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
-
-
-    wordsNumberInputSlider.value = words
-    let add = 6.428571428571429
-    wordsNumberSliderValue.textContent = `${words} mots`
-    wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
-
     gameDurationInputSlider.oninput = (() => {
-        updateSliders(time, words)
+        //updateSliders(time, words)
+        let time = gameDurationInputSlider.value
+        gameDurationSliderValue.textContent = `${time} sec.`
+        gameDurationSliderValue.style.left = (time * 60 / 150) + 3 + '%'
     });
 
     wordsNumberInputSlider.oninput = (() => {
-        updateSliders(time, words)
+        //updateSliders(time, words)
+        let words = wordsNumberInputSlider.value
+        let add = 6.428571428571429
+        wordsNumberSliderValue.textContent = `${words} mots`
+        wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
+
+    });
+}
+
+function updatePreferences(time, words) {
+    const gameDuration = document.querySelector('.game-duration p span')
+    const wordsNumber = document.querySelector('.words-number p span')
+
+    gameDuration.textContent = `${time} sec.`
+    wordsNumber.textContent = `${words} mots`
+}
+
+function updateScoreBoard(game, users) {
+    const playerList = document.querySelector('.scoreboard');
+
+    playerList.innerHTML = "";
+
+    let sortable = [];
+    for (const key in users) {
+        const gameStat = game.getUserGameStats(key);
+        sortable.push([users[key], gameStat.getScore()]);
+    }
+
+    sortable.sort((a,b) => {
+        return b[1] - a[1];
+    });
+
+    const bestScore = sortable[0][1]
+
+    let counter = 0;
+    sortable.forEach(user => {
+        const name = user[0].getName();
+        const color = user[0].getInfo().color;
+        const avatar = user[0].getInfo().avatar;
+        const gameStat = game.getUserGameStats(user[0].getUUID());
+
+        let classment = ''
+        switch (counter) {
+            case 0:
+                classment = 'first'
+                break
+            case 1:
+                classment = 'second'
+                break
+            case 2:
+                classment = 'third'
+                break
+        }
+
+        playerList.innerHTML += `
+            <div class="player-container ${classment} color-${color}">
+                <div class="charte" style="height: ${gameStat.getScore()/bestScore * 100}%">
+                    <img src="${avatar}"  alt="Avatar du Joueur">
+                    <div class="bar"></div>
+                    <p class="points-final">${gameStat.getScore()} pts</p>
+                </div>
+                <span class="player_pseudo">${name}</span>
+                <span class="podium">#${counter + 1}</span>
+            </div>`
+
+        counter += 1;
     });
 }
 
@@ -167,5 +225,7 @@ module.exports = {
     setPoints,
     setWords,
     updateWordUsers,
-    updateSliders
+    updateSliders,
+    updatePreferences,
+    updateScoreBoard
 }
