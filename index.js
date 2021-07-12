@@ -256,13 +256,11 @@ io.on('connection', socket => {
     });
 
     socket.on('restart_game', (code, serial_game) => {
-        console.log(serial_game)
         const newGame = new Game(code, serial_game.duration, serial_game.wordAmount)
         for (const key in serial_game.users) {
             newGame.addUser(key);
         }
         global.rooms[code].setGame(newGame)
-        console.log(global.rooms[code])
 
         socket.join(code)
         io.sockets.in(code).emit('game_restarted', global.rooms[code])
