@@ -194,7 +194,9 @@ io.on('connection', socket => {
         io.sockets.in(code).emit('update_letter', global.rooms[code])
     });
 
-
+    /**
+     * Lorsque le client presse `ENTER` pour envoyer un mot
+     */
     socket.on('press_enter', (code, word_input, letters, uuid) => {
         const game = global.rooms[code].getGame()
         const user = global.rooms[code].getUsers()[uuid]
@@ -255,6 +257,9 @@ io.on('connection', socket => {
         io.sockets.in(code).emit('word_finish', win_info, global.rooms[code])
     });
 
+    /**
+     * Lorsque l'owner de la game envoie une demande pour démarrer une nouvel partie
+     */
     socket.on('restart_game', (code, serial_game) => {
         const newGame = new Game(code, serial_game.duration, serial_game.wordAmount)
         for (const key in serial_game.users) {
@@ -290,8 +295,6 @@ io.on('connection', socket => {
         socket.join(code);
         io.sockets.in(code).emit('updated_room', global.rooms[code]);
     });*/
-
-
 
     /**
      * On client disconnect

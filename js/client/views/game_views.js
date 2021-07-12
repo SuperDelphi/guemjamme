@@ -1,3 +1,11 @@
+/**
+ * Update de la liste des joueurs a gauche
+ * TODO: Animations
+ *
+ * @param game
+ * @param users
+ * @param win_info
+ */
 const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sign: 0}) => {
     const playerList = document.querySelector('.players-list');
 
@@ -76,6 +84,11 @@ const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sig
     });
 }
 
+/**
+ * Définis les couleurs des utilisateurs
+ *
+ * @param color
+ */
 function setPlayerColor(color) {
     const playerName = document.querySelector('.input .player-name');
     playerName.classList.forEach(col => {
@@ -89,49 +102,72 @@ function setPlayerColor(color) {
     playerInput.classList.add(`color-${color}`);
 }
 
+/**
+ * Update le temps restant
+ *
+ * @param time
+ */
 function setTimer(time) {
     const timer = document.getElementById('timer');
     timer.innerHTML = `<span class="bold">Temps restant : </span> ${time}`;
 }
 
+/**
+ * Update le nombres de joueurs dans la partie
+ *
+ * @param nb
+ */
 function setNumberPlayer(nb) {
     const nbPlayer = document.getElementById('nb-player');
     nbPlayer.innerHTML = `<span class="bold">Nombre de joueurs : </span>${nb}`;
 }
 
+/**
+ * Update les points du client a coté de l'input
+ *
+ * @param points
+ */
 function setPoints(points) {
     const inputPoints = document.getElementById('input-points');
     inputPoints.innerText = points;
 }
 
-function setWords(words) {
+/**
+ * Update les mots de la partie
+ *
+ * @param words
+ */
+function updateWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     wordsSection.innerHTML = ''
+
     for (const key in words) {
+        let y = 'default'
+        if (words[key].getNbUsers() > 0) y = 'write'
+
+        let l = ``
+        Object.keys(words[key].getUsers()).forEach(uuid => {
+            if (words[key].getUsers()[uuid]) l += `<span class="circle color-${words[key].getUsers()[uuid]}"></span>`
+        });
+
         wordsSection.innerHTML += `
             <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
                 <div class="players-circles">
+                    ${l}
                 </div>
 
-                <div class="word-container default">
+                <div class="word-container ${y}">
                     <p>${words[key].getWord()}</p>
                 </div>
             </div>`
     }
 }
 
-function updateWordUsers(words) {
-    for (const key in words) {
-        let wordsUsers = document.querySelector(`#${words[key].getWord()} .players-circles`);
-
-        let l = ``
-        Object.keys(words[key].getUsers()).forEach(uuid => {
-            if (words[key].getUsers()[uuid]) l += `<span class="circle color-${words[key].getUsers()[uuid]}"></span>`
-        });
-        wordsUsers.innerHTML = l
-    }
-}
-
+/**
+ * Update range sliders (animation) :
+ *  - game duration
+ *  - word amount
+ */
 function updateSliders() {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
@@ -157,6 +193,13 @@ function updateSliders() {
     });
 }
 
+
+/**
+ * Update les preferences de la partie lors de la phase d'attente des joueurs
+ *
+ * @param time
+ * @param words
+ */
 function updatePreferences(time, words) {
     const gameDuration = document.querySelector('.game-duration p span')
     const wordsNumber = document.querySelector('.words-number p span')
@@ -165,6 +208,13 @@ function updatePreferences(time, words) {
     wordsNumber.textContent = `${words} mots`
 }
 
+/**
+ * Update du scoreboard final
+ * TODO: Animations
+ *
+ * @param game
+ * @param users
+ */
 function updateScoreBoard(game, users) {
     const playerList = document.querySelector('.scoreboard');
 
@@ -223,8 +273,7 @@ module.exports = {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords,
-    updateWordUsers,
+    updateWords,
     updateSliders,
     updatePreferences,
     updateScoreBoard

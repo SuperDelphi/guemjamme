@@ -77,16 +77,19 @@
 }
 
 
-
-.word .word-container.default {
-    border: 3px solid var(--color_word_default);
-}
-
 .word .word-container {
     padding: .8rem 3rem;
     border-radius: 25px;
     background-color: var(--color_white);
 }
+.word .word-container.default {
+    border: 3px solid var(--color_word_default);
+}
+.word .word-container.write {
+    border: 3px solid var(--color_red);
+}
+
+
 
 .word p {
     color: var(--color_word_default);

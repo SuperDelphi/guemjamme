@@ -52,6 +52,10 @@ class Word {
     equalWord = (word) => {
         return this.word === word;
     }
+
+    getNbUsers = () => {
+        return Object.keys(this.users).length;
+    }
 }
 
 function arraysEqual(a, b) {

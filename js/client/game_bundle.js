@@ -2589,6 +2589,10 @@ class Word {
     equalWord = (word) => {
         return this.word === word;
     }
+
+    getNbUsers = () => {
+        return Object.keys(this.users).length;
+    }
 }
 
 function arraysEqual(a, b) {
@@ -2611,8 +2615,7 @@ const {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords,
-    updateWordUsers,
+    updateWords,
     updateSliders,
     updatePreferences,
     updateScoreBoard
@@ -2729,7 +2732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerList.classList.remove('hidden')
         preferencesSection.classList.add('hidden')
 
-        setWords(game.getWords())
+        updateWords(game.getWords())
         PLAYING = true
     });
 
@@ -2749,6 +2752,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.keyCode === 8 && input_user.length > 0) {
             input_user.pop();
             document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
+            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
 
         // Si la touche pressé est Enter
@@ -2771,8 +2775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        setWords(game.getWords())
-        updateWordUsers(game.getWords())
+        updateWords(game.getWords())
     })
 
     socket.on('word_finish', (win_info, serial_room) => {
@@ -2782,8 +2785,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers(), win_info)
-        setWords(game.getWords())
-        updateWordUsers(game.getWords())
+        updateWords(game.getWords())
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -2962,31 +2964,29 @@ function setPoints(points) {
     inputPoints.innerText = points;
 }
 
-function setWords(words) {
+function updateWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     wordsSection.innerHTML = ''
-    for (const key in words) {
-        wordsSection.innerHTML += `
-            <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
-                <div class="players-circles">
-                </div>
 
-                <div class="word-container default">
-                    <p>${words[key].getWord()}</p>
-                </div>
-            </div>`
-    }
-}
-
-function updateWordUsers(words) {
     for (const key in words) {
-        let wordsUsers = document.querySelector(`#${words[key].getWord()} .players-circles`);
+        let y = 'default'
+        if (words[key].getNbUsers() > 0) y = 'write'
 
         let l = ``
         Object.keys(words[key].getUsers()).forEach(uuid => {
             if (words[key].getUsers()[uuid]) l += `<span class="circle color-${words[key].getUsers()[uuid]}"></span>`
         });
-        wordsUsers.innerHTML = l
+
+        wordsSection.innerHTML += `
+            <div id="${words[key].getWord()}" class="word case-${words[key].getPosition()}">
+                <div class="players-circles">
+                    ${l}
+                </div>
+
+                <div class="word-container ${y}">
+                    <p>${words[key].getWord()}</p>
+                </div>
+            </div>`
     }
 }
 
@@ -3081,8 +3081,7 @@ module.exports = {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords,
-    updateWordUsers,
+    updateWords,
     updateSliders,
     updatePreferences,
     updateScoreBoard

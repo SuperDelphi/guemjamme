@@ -6,8 +6,7 @@ const {
     setTimer,
     setNumberPlayer,
     setPoints,
-    setWords,
-    updateWordUsers,
+    updateWords,
     updateSliders,
     updatePreferences,
     updateScoreBoard
@@ -124,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerList.classList.remove('hidden')
         preferencesSection.classList.add('hidden')
 
-        setWords(game.getWords())
+        updateWords(game.getWords())
         PLAYING = true
     });
 
@@ -144,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.keyCode === 8 && input_user.length > 0) {
             input_user.pop();
             document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
+            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
 
         // Si la touche pressé est Enter
@@ -160,16 +160,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /**
+     * Lorsqu'un client a appuyé sur une touche le serveur envoie la touche entrée aux autres clients
+     */
     socket.on('update_letter', (serial_room) => {
         room = RF.getFromSocket(serial_room)
         game = room.getGame()
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        setWords(game.getWords())
-        updateWordUsers(game.getWords())
+        updateWords(game.getWords())
     })
 
+    /**
+     * Lorsqu'un mot à été écrit et validé par le serveur
+     */
     socket.on('word_finish', (win_info, serial_room) => {
         room = RF.getFromSocket(serial_room)
         game = room.getGame()
@@ -177,8 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers(), win_info)
-        setWords(game.getWords())
-        updateWordUsers(game.getWords())
+        updateWords(game.getWords())
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -187,10 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /**
+     * Event pour mettre à jours le temops restant
+     */
     socket.on('update_time', (time) => {
         setTimer(time)
     });
 
+    /**
+     * Lorsque le serveur anonce que le temps est écoulé
+     */
     socket.on('game_finish', (serial_game) => {
         game = GF.getFromSocket(serial_game);
         room.setGame(game)
@@ -213,6 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(game.getScoreBoard(), game.getStatus())
     })
 
+    /**
+     * Restart Game Button Event
+     */
     const restartGameBtn = document.getElementById('restart_game')
     restartGameBtn.addEventListener('click', () => {
         const gameDuration = document.getElementById('new_game_duration').value;
@@ -225,6 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.emit('restart_game', code, game);
     });
 
+    /**
+     * Lorsque le serveur a créé une nouvelle game dans la room
+     */
     socket.on('game_restarted', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();

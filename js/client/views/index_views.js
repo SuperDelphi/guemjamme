@@ -1,8 +1,18 @@
+/**
+ * Met un pseudo (definis aleatoirement) dans l'input du pseudo
+ *
+ * @param pseudo
+ */
 function setDefaultPseudo(pseudo) {
     const name = document.getElementById('name')
     name.setAttribute('value', pseudo);
 }
 
+/**
+ * Update range sliders (animation) :
+ *  - game duration
+ *  - word amount
+ */
 function updateSliders() {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
