@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uuid = getCookie("uuid");
     const code = getCookie("code")
 
-    var link = `localhost:3000/join?${code}`;
+    var link = `${location.origin}/join?${code}`;
 
     var room
     var game

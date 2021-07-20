@@ -36,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de plus de 6 caratères.', notification.types.WARNING)
 
+        if (name.length > 16) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de moins de 16 caratères.', notification.types.WARNING)
+
         /**
          * Par défault le créateur de la room est en jaune (sans doute le passer coté serveur pour éviter les soucis)
          * Les préférences par défault sont :

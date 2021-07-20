@@ -2419,6 +2419,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de spécifier un pseudo de plus de 6 caractères', notification.types.WARNING, 5)
 
+        if (name.length > 16) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de moins de 16 caratères.', notification.types.WARNING)
+
         if (noRoom) return notification.new('no room find', `La room à laquelle vous tentez d\'acceder n\'existe pas, vérifiez si le code renseigné est le bon. <br>Sinon vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR)
 
         if (noPlace) return notification.new('limit of players reached', `La room à laquelle vous tentez d\'acceder est déja complete. <br>Vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR)

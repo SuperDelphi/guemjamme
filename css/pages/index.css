@@ -39,7 +39,7 @@ body.new_game .new-game-wrapper .last-line {
     justify-content: space-between;
 }
 body.new_game .new-game-wrapper .watermark {
-    align-self: flex-end;
+    align-self: center;
     margin-right: 3rem;
     font-size: 1.4rem;
     font-weight: 600;
