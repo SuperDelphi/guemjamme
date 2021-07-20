@@ -14,7 +14,9 @@ const Game = require('./js/classe/Game');
 const RoomFactory = require('./js/factories/RoomFactory');
 const GameFactory = require('./js/factories/GameFactory');
 const RF = new RoomFactory();
-const GF = new RoomFactory();
+const GF = new GameFactory();
+
+require('events').EventEmitter.defaultMaxListeners = 0
 
 const {
     roomCode,
@@ -24,8 +26,7 @@ const {
 } = require('./js/functions');
 
 global.rooms = {}
-global.users = []
-
+global.users = {}
 
 app.use(express.static(__dirname+'/'));
 
@@ -50,7 +51,6 @@ app.get('/join', (req, res) => {
     res.sendFile(__dirname + '/views/join.html');
 });
 
-
 io.on('connection', socket => {
 
     ///////////// PAGE INDEX/HOST ROOM /////////////
@@ -72,15 +72,13 @@ io.on('connection', socket => {
         room.setGame(game)
 
         global.rooms[code] = room;
-        global.users.push(uuid, socket, code)
+        global.users[uuid] = {socket, code}
 
         console.log(`New room - CODE : ${code}, owner : {uuid: ${uuid}, name: ${name}}, preferences : ${JSON.stringify(preferences)}`)
 
         socket.join(code);
         socket.emit('success_host_room', code, uuid);
     });
-
-
 
     ///////////// PAGE JOIN /////////////
 
@@ -90,8 +88,8 @@ io.on('connection', socket => {
     socket.on('exist_room', (code) => {
         /* Si la room n'existe pas */
         if (!global.rooms[code]) return socket.emit('no_room');
+
         /* Si il n'y a plus de place dans la room (> 6) */
-        global.rooms[code].getNbUsers()
         if (global.rooms[code].getNbUsers() >= 6) return socket.emit('no_place')
 
         /* On attribut la couleur en fonction du nombre de joueurs dans la room (par default le premier est jaune) */
@@ -125,12 +123,10 @@ io.on('connection', socket => {
         const newUser = new User(uuid, name, color, avatar);
 
         global.rooms[code].addUser(newUser);
-        global.users.push(uuid, socket, code)
+        global.users[uuid] = {socket, code}
 
         socket.emit('created_user', code, uuid);
     });
-
-
 
     ///////////// PAGE GAME /////////////
 
@@ -142,6 +138,7 @@ io.on('connection', socket => {
         game.addUser(uuid);
 
         global.rooms[code].setGame(game)
+        global.users[uuid] = {socket, code}
 
         socket.join(code);
         io.sockets.in(code).emit('new_join', global.rooms[code]);
@@ -180,7 +177,7 @@ io.on('connection', socket => {
         for (const key in words) {
             let w = words[key]
 
-            if (w.include(word_input)) {
+            if (w.include(word_input) && letters.length > 0) {
                 w.addUser(uuid, user.getInfo().color)
             } else {
                 w.removeUser(uuid)
@@ -209,7 +206,7 @@ io.on('connection', socket => {
             if (words[key].equalWord(word_input)) {
                 word_final = words[key]
                 delete words[key]
-                words[key] = genSingleWord(game)
+                words[key] = genSingleWord(game, word_final)
                 verifyW.push('o')
             } else {
                 verifyW.push('x')
@@ -230,16 +227,15 @@ io.on('connection', socket => {
             case 3:
                 GS.setMultiplier(2.5)
                 break
-            case 4:
+            default :
                 GS.setMultiplier(3)
                 break
         }
 
-
         let pts = Math.floor(letters.length/2)
         let signe = '-'
         if (verifyW.includes('o')) {
-            pts = letters.length
+            pts = letters.length * GS.getMultiplier()
             signe = '+'
             user.addCombos();
             GS.addPoints(pts)
@@ -248,7 +244,16 @@ io.on('connection', socket => {
             GS.removePoints(pts)
         }
 
-        const win_info = {uuid: uuid, pts: pts, word: word_final, sign: signe}
+        console.log('combos', user.getCombos(), 'multiplier', GS.getMultiplier(),'score' , GS.getScore(), 'letters', letters.length, 'pts', pts, 'signe', signe)
+
+        const win_info = {
+            uuid: uuid,
+            pts: pts,
+            word: word_final !== undefined
+                ? word_final
+                : {word: word_input},
+            sign: signe
+        }
 
         game.setWords(words);
 
@@ -299,18 +304,38 @@ io.on('connection', socket => {
     /**
      * On client disconnect
      */
-    /*socket.on('disconnect', (socket) => {
-        console.log(socket)
+    socket.on('disconnect', (socket_t) => {
 
-        var t
-        for (const prop in socketlist) {
-            if (socketlist[prop].socket === socket) t = prop;
+        if (socket.handshake.headers.referer.endsWith('/game')) {
+            for (const uuid in global.users) {
+                const user = global.users[uuid]
+                if (user.socket.id === socket.id) {
+                    const userHasLeft = global.rooms[user.code].getUsers()[uuid]
+
+                    if (global.rooms[user.code].getOwner().getUUID() === uuid) {
+                        setTimeout(() => {
+                            delete global.rooms[user.code]
+                            socket.leave(user.code)
+                        }, 40000)
+
+                        socket.join(user.code)
+                        return io.sockets.in(user.code).emit('owner_left', userHasLeft)
+                    } else {
+                        const game = global.rooms[user.code].getGame()
+
+                        global.rooms[user.code].removeUser(uuid)
+                        game.removeUser(uuid)
+
+                        global.rooms[user.code].setGame(game)
+
+                        socket.join(user.code)
+                        return io.sockets.in(user.code).emit('user_left', global.rooms[user.code], userHasLeft)
+                    }
+                }
+            }
         }
-
-        console.log(t)
-    })*/
+    })
 });
-
 
 server.listen(3000, () => {
     console.log('server running on port 3000')

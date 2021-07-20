@@ -80,6 +80,10 @@ class Game {
         this.users[uuid] = gameStat;
     }
 
+    removeUser = (uuid) => {
+        delete this.users[uuid];
+    }
+
     setUsers = (users) => {
         this.users = users;
     }

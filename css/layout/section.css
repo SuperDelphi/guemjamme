@@ -134,8 +134,8 @@
 /* WORDS */
 .wrapper .game-section .words {
     display: grid;
-    grid-template-columns: repeat(2, 50%);
-    grid-template-rows: repeat(4, 25%);
+    grid-template-columns: repeat(4, 25%);
+    grid-template-rows: repeat(5, 20%);
     column-gap: 10px;
     row-gap: 10px;
     flex-direction: column;
@@ -306,6 +306,7 @@
     color: var(--color_word_default);
     position: absolute;
     transform: rotateZ(-90deg);
+    text-align: left;
     bottom: 5%;
     width: max-content;
     margin-bottom: 1rem;

@@ -2,14 +2,18 @@ const {setCookie, genRandomAvatar, randomPseudo} = require('../functions')
 const {setColor, setDefaultPseudo} = require('../client/views/join_views');
 const {io} = require("socket.io-client");
 
+const Notification = require('../classe/Notification')
+const notification = new Notification(document)
+
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
     /* Récupération du code de la room dans l'URL */
-    const code = location.search.slice(1);
+    var code = location.search.slice(1);
 
     let new_avatar = genRandomAvatar();
     document.getElementById('avatar').setAttribute('src', '../src/img/'+new_avatar)
+
     /* Génère un nouvel avatar aléatoirement */
     const randomAvatar = document.getElementById('random_avatar');
     randomAvatar.addEventListener('click', () => {
@@ -27,6 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
         setColor(color);
     });
 
+    /**
+     * Si la room n'existe pas :
+     */
+    var noRoom = false;
+    socket.on('no_room', () => {
+        noRoom = true;
+        console.log(noPlace, noRoom)
+    });
+
+    /**
+     * Si le nombres d'utilisateurs est déja atteint
+     */
+    var noPlace = false;
+    socket.on('no_place', () => {
+        noPlace = true;
+        console.log(noPlace, noRoom)
+    });
+
     setDefaultPseudo(randomPseudo());
 
 
@@ -39,6 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
+
+        if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de spécifier un pseudo de plus de 6 caractères', notification.types.WARNING, 5)
+
+        if (noRoom) return notification.new('no room find', `La room à laquelle vous tentez d\'acceder n\'existe pas, vérifiez si le code renseigné est le bon. <br>Sinon vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR)
+
+        if (noPlace) return notification.new('limit of players reached', `La room à laquelle vous tentez d\'acceder est déja complete. <br>Vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR)
 
         /**
          * Envoie la demande au serveur pour créer l'utilisateur et l'ajouter a la room

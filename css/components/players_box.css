@@ -42,7 +42,7 @@
 .add-point{
     position: relative;
     display: flex;
-    left: 5rem;
+    left: 3rem;
 }
 
 .player-score{
@@ -74,9 +74,6 @@
 .color-pink .player-picture{
     background-color: var(--color_player_light_pink);
 }
-
-
-
 
 
 

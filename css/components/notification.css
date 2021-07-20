@@ -1,0 +1,71 @@
+.notifications-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    z-index: 3;
+}
+
+.notifications-container .notification {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 500px;
+    top: -50%;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    color: var(--color_white);
+}
+.notifications-container .notification:hover {
+    cursor: pointer;
+}
+
+.notifications-container .notification.error {
+    background-color: var(--color_error);
+}
+.notifications-container .notification.warning {
+    background-color: var(--color_warning);
+}
+.notifications-container .notification.info {
+     background-color: var(--color_info);
+}
+.notifications-container .notification.success {
+      background-color: var(--color_success);
+}
+
+.notifications-container .notification.show {
+    top: 2rem;
+}
+
+.notifications-container .notification .type {
+    margin-bottom: 0.6rem;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+.notifications-container .notification .type::after {
+    position: absolute;
+    content: '\f057';
+    font: normal normal normal 20px/1 FontAwesome;
+    top: 5px;
+    right: 5px;
+}
+.notifications-container .notification .text {
+    text-align: justify;
+    font-size: 1rem;
+}
+.notifications-container .notification .text a {
+    text-decoration: none;
+    font-weight: 600;
+    color: var(--color_white);
+}
+
+.notifications-container .notification .text a:visited {
+    color: var(--color_white);
+}
+
+.notifications-container .notification .text a:hover {
+    color: var(--color_white);
+}

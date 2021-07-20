@@ -19,4 +19,9 @@
     --color_podium_first: #FFE300;
     --color_podium_second: #939393;
     --color_podium_third: #FF8E00;
+
+    --color_error: #de0000;
+    --color_warning: #de7a00;
+    --color_info: #0090de;
+    --color_success: #24af06;
 }

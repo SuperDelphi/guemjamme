@@ -2289,6 +2289,10 @@ class Game {
         this.users[uuid] = gameStat;
     }
 
+    removeUser = (uuid) => {
+        delete this.users[uuid];
+    }
+
     setUsers = (users) => {
         this.users = users;
     }
@@ -2391,7 +2395,7 @@ class GameStats {
     }
 
     addPoints = (points) => {
-        this.score += Math.floor(points * this.multiplier);
+        this.score += Math.floor(points);
     }
 
     removePoints = (points) => {
@@ -2413,6 +2417,80 @@ class GameStats {
 
 module.exports = GameStats;
 },{}],8:[function(require,module,exports){
+const NotifyType = {
+    WARNING: 1,
+    ERROR: 2,
+    INFO: 3,
+    SUCCESS: 4
+}
+
+var counter = 0
+
+module.exports = class Notifications {
+    title
+    reason
+    type
+    duration
+
+    types = {
+        WARNING: 1,
+        ERROR: 2,
+        INFO: 3,
+        SUCCESS: 4
+    }
+
+    document
+    container
+    element
+
+    constructor(document) {
+        this.document = document;
+        this.container = document.querySelector('.notifications-container')
+    }
+
+    new = (title, reason, type, duration = 5) => {
+        let classType
+        switch (type) {
+            case 1:
+                classType = 'warning'
+                break
+            case 2:
+                classType = 'error'
+                break
+            case 3:
+                classType = 'info'
+                break
+            case 4:
+                classType = 'success'
+                break
+        }
+
+        let id = counter
+
+        this.container.innerHTML += `
+            <div id="${id}" class="notification ${classType} show">
+                <span class="type">${classType.toUpperCase()} - ${title.toUpperCase()}</span>
+                <p class="text">${reason}</p>
+            </div>`
+        this.element = this.document.getElementById(`#${counter}`)
+
+        let startTime = Date.now()
+        let t = setInterval(() => {
+            document.querySelectorAll('.notification').forEach(el => {
+                if (parseInt(el.id) === id && Date.now() - startTime > duration * 1000) {
+                    this.container.removeChild(el)
+                    clearInterval(t)
+                }
+                el.addEventListener('click', () => {
+                    this.container.removeChild(el)
+                    clearInterval(t)
+                })
+            })
+        }, 1000)
+        counter += 1
+    }
+}
+},{}],9:[function(require,module,exports){
 class Room {
     code
     owner
@@ -2430,7 +2508,7 @@ class Room {
         this.users[owner.getUUID()] = owner;
     }
 
-    getUsers = () => {
+    getUsers = (uuid = null) => {
         return this.users;
     }
 
@@ -2483,7 +2561,7 @@ class Room {
 if (module) {
     module.exports = Room;
 }
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 class User {
     uuid
     name
@@ -2534,7 +2612,7 @@ class User {
 }
 module.exports = User
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 class Word {
     word
     length
@@ -2606,7 +2684,7 @@ function arraysEqual(a, b) {
 }
 
 module.exports = Word
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 const {getCookie} = require('../functions');
 const {io} = require("socket.io-client");
 const {
@@ -2618,7 +2696,8 @@ const {
     updateWords,
     updateSliders,
     updatePreferences,
-    updateScoreBoard
+    updateScoreBoard,
+    updateWinInfos
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -2626,9 +2705,12 @@ const GameFactory = require('../factories/GameFactory')
 const RF = new RoomFactory();
 const GF = new GameFactory()
 
+const Notification = require('../classe/Notification')
+const notification = new Notification(document)
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    const socket = io("/",{ transports: ["websocket"] });
+    const socket = io();
 
     /* Récupération des cookies */
     const uuid = getCookie("uuid");
@@ -2670,8 +2752,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
-    });
 
+        notification.new('new join', `Un nouveau joueur a rejoint la partie <br>Nombres de joueurs : ${game.getNbPlayer()}`, notification.types.INFO)
+    });
 
     /**
      * Show Link Button
@@ -2680,7 +2763,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLinkText = document.getElementById('link')
     showLinkBtn.addEventListener('click', () => {
         if (room.getOwner().getUUID() !== uuid) return;
-        console.log('link shown')
         showLinkBtn.classList.toggle('hidden')
         showLinkText.classList.toggle('hidden')
 
@@ -2699,9 +2781,8 @@ document.addEventListener('DOMContentLoaded', () => {
         temp.select();
         document.execCommand("copy");
         temp.remove();
-        alert('Link Copied !')
+        notification.new('link copied', `Le lien pour accéder à votre partie a été copié dans votre presse-papier`, notification.types.INFO)
     });
-
 
     /**
      * Start Game Button Event
@@ -2711,7 +2792,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (room.getOwner().getUUID() !== uuid) return;
         socket.emit('start_game', code);
     });
-
 
     /**
      * Lorsque la game a été déclarée comme commencée
@@ -2728,14 +2808,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const preferencesSection = document.querySelector('.settings-section')
 
         resultSection.classList.add('hidden');
+        preferencesSection.classList.add('hidden')
+
         gameSection.classList.remove('hidden')
         playerList.classList.remove('hidden')
-        preferencesSection.classList.add('hidden')
 
         updateWords(game.getWords())
         PLAYING = true
-    });
 
+        notification.new('game started', `La partie viens de commencer ! Bonne chance !`, notification.types.SUCCESS, 2)
+    });
 
     /**
      * KeyDown Event listener
@@ -2752,7 +2834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.keyCode === 8 && input_user.length > 0) {
             input_user.pop();
             document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
-            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
+            if (input_user.length > 0) return socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
 
         // Si la touche pressé est Enter
@@ -2769,6 +2851,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /**
+     * Lorsqu'un client a appuyé sur une touche le serveur envoie la touche entrée aux autres clients
+     */
     socket.on('update_letter', (serial_room) => {
         room = RF.getFromSocket(serial_room)
         game = room.getGame()
@@ -2778,14 +2863,18 @@ document.addEventListener('DOMContentLoaded', () => {
         updateWords(game.getWords())
     })
 
+    /**
+     * Lorsqu'un mot à été écrit et validé par le serveur
+     */
     socket.on('word_finish', (win_info, serial_room) => {
         room = RF.getFromSocket(serial_room)
         game = room.getGame()
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        updatePlayerList(game, room.getUsers(), win_info)
+        updatePlayerList(game, room.getUsers())
         updateWords(game.getWords())
+        updateWinInfos(win_info)
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -2794,10 +2883,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /**
+     * Event pour mettre à jours le temops restant
+     */
     socket.on('update_time', (time) => {
         setTimer(time)
     });
 
+    /**
+     * Lorsque le serveur anonce que le temps est écoulé
+     */
     socket.on('game_finish', (serial_game) => {
         game = GF.getFromSocket(serial_game);
         room.setGame(game)
@@ -2809,17 +2904,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerList = document.querySelector('.players-list')
         const preferencesSection = document.querySelector('.settings-section')
 
-        resultSection.classList.remove('hidden');
+        resultSection.classList.remove('hidden')
+
         gameSection.classList.add('hidden')
         playerList.classList.add('hidden')
         preferencesSection.classList.add('hidden')
 
-        updateSliders();
+        updateSliders(game.getDuration(), game.getWordAmount());
         updateScoreBoard(game, room.getUsers())
 
         console.log(game.getScoreBoard(), game.getStatus())
+
+        notification.new('game finish', `La partie se termine !`, notification.types.SUCCESS, 2)
     })
 
+    /**
+     * Restart Game Button Event
+     */
     const restartGameBtn = document.getElementById('restart_game')
     restartGameBtn.addEventListener('click', () => {
         const gameDuration = document.getElementById('new_game_duration').value;
@@ -2832,13 +2933,51 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.emit('restart_game', code, game);
     });
 
+    /**
+     * Lorsque le serveur a créé une nouvelle game dans la room
+     */
     socket.on('game_restarted', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
 
-        console.log(room)
         window.location.reload()
     });
+
+
+    /**
+     * If a user left the game
+     */
+    socket.on('user_left', (serial_room, userHasLeft) => {
+        room = RF.getFromSocket(serial_room);
+        game = room.getGame();
+
+        updatePlayerList(game, room.getUsers())
+        setNumberPlayer(game.getNbPlayer())
+
+        notification.new('user deconnexion', `${userHasLeft.name} à été déconnecté`, notification.types.WARNING)
+    });
+
+    /**
+     * If the game owner left the game
+     */
+    socket.on('owner_left', (userHasLeft) => {
+        if (userHasLeft.uuid !== room.getOwner().getUUID()) return
+
+        notification.new('owner deconnexion', `Le propriétaire de votre partie ${userHasLeft.name} à quitté, Cette partie va donc être fermée. <br>Vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR, 30)
+        setTimeout(() => {
+            window.location.replace('/')
+        }, 30000)
+    });
+
+    /**
+     * If the server is deconnecting
+     */
+    socket.on('disconnect', () => {
+        notification.new('deconnexion', 'you have been disconnected. You will redirect to main page in 30sec.', notification.types.ERROR)
+        setTimeout(() => {
+            window.location.replace('/')
+        }, 30000)
+    })
 })
 
 /**
@@ -2857,8 +2996,15 @@ const updateRoom = (socket, code, room) => {
         });
     });
 }
-},{"../factories/GameFactory":13,"../factories/RoomFactory":15,"../functions":17,"./views/game_views":12,"socket.io-client":43}],12:[function(require,module,exports){
-const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sign: 0}) => {
+},{"../classe/Notification":8,"../factories/GameFactory":14,"../factories/RoomFactory":16,"../functions":18,"./views/game_views":13,"socket.io-client":44}],13:[function(require,module,exports){
+/**
+ * Update de la liste des joueurs a gauche
+ * TODO: Animations
+ *
+ * @param game
+ * @param users
+ */
+const updatePlayerList = (game, users) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
@@ -2879,47 +3025,11 @@ const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sig
         const color = user[0].getInfo().color;
         const avatar = user[0].getInfo().avatar;
         const gameStat = game.getUserGameStats(user[0].getUUID());
-
-        /*if (user[0].getUUID() === win_info.uuid) {
-            const pts = win_info.pts
-            const word = win_info.word.word
-            const signe = win_info.sign
-
-            playerList.innerHTML += `
-                <div id="${user[0].getUUID()}" class="player_box color-${color}">
-                    <div class="player-picture">
-                        <img src="${avatar}" alt="Image du joueur">
-                        <div class="points-won ">
-                            <p>${word}</p>
-                            <div class="add-point">
-                                <p>${signe}</p>
-                                <p>${pts}</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="player-infos hidden">
-                        <p class="player-name">${name}</p>
-            
-                        <div class="player-score">
-                            <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-            `
-        }*/
         playerList.innerHTML += `
             <div id="${user[0].getUUID()}" class="player_box color-${color}">
                 <div class="player-picture">
                     <img src="${avatar}" alt="Image du joueur">
-                    <div class="points-won hidden">
-                        <p></p>
-                        <div class="add-point">
-                            <p></p>
-                            <p></p>
-                        </div>
-                    </div>
+                    <div class="points-won hidden"></div>
                 </div>
                 
                 <div class="player-infos">
@@ -2932,10 +3042,38 @@ const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sig
                 </div>
             </div>
         `
-
     });
 }
 
+function updateWinInfos(win_info) {
+    const pts = win_info.pts
+    const word = win_info.word.word
+    const signe = win_info.sign
+
+    console.log(win_info)
+
+    const userWordDiv = document.querySelector(`[id="${win_info.uuid}"] .player-picture .points-won`)
+    const userInfoDiv = document.querySelector(`[id="${win_info.uuid}"] .player-infos`)
+    userWordDiv.innerHTML = `
+            <p>${word}</p>
+            <div class="add-point">
+                <p>${signe}</p>
+                <p>${pts}</p>
+            </div>`
+    userWordDiv.classList.remove('hidden')
+    userInfoDiv.classList.add('hidden')
+
+    setTimeout(() => {
+        userWordDiv.classList.add('hidden')
+        userInfoDiv.classList.remove('hidden')
+    }, 3000);
+}
+
+/**
+ * Définis les couleurs des utilisateurs
+ *
+ * @param color
+ */
 function setPlayerColor(color) {
     const playerName = document.querySelector('.input .player-name');
     playerName.classList.forEach(col => {
@@ -2949,21 +3087,41 @@ function setPlayerColor(color) {
     playerInput.classList.add(`color-${color}`);
 }
 
+/**
+ * Update le temps restant
+ *
+ * @param time
+ */
 function setTimer(time) {
     const timer = document.getElementById('timer');
     timer.innerHTML = `<span class="bold">Temps restant : </span> ${time}`;
 }
 
+/**
+ * Update le nombres de joueurs dans la partie
+ *
+ * @param nb
+ */
 function setNumberPlayer(nb) {
     const nbPlayer = document.getElementById('nb-player');
     nbPlayer.innerHTML = `<span class="bold">Nombre de joueurs : </span>${nb}`;
 }
 
+/**
+ * Update les points du client a coté de l'input
+ *
+ * @param points
+ */
 function setPoints(points) {
     const inputPoints = document.getElementById('input-points');
     inputPoints.innerText = points;
 }
 
+/**
+ * Update les mots de la partie
+ *
+ * @param words
+ */
 function updateWords(words) {
     const wordsSection = document.querySelector('.game-section .words');
     wordsSection.innerHTML = ''
@@ -2990,14 +3148,30 @@ function updateWords(words) {
     }
 }
 
-function updateSliders() {
+/**
+ * Update range sliders (animation) :
+ *  - game duration
+ *  - word amount
+ */
+function updateSliders(duration, wordsAmount) {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
 
     const gameDurationInputSlider = document.querySelector('.game-duration.range input')
     const wordsNumberInputSlider = document.querySelector('.words-number.range input')
 
+    /**
+     * Defined the sliders pos in function of pre game preferences
+     */
+    gameDurationSliderValue.textContent = `${duration} sec.`
+    gameDurationSliderValue.style.left = (duration * 60 / 150) + 3 + '%'
+    let add = 6.428571428571429
+    wordsNumberSliderValue.textContent = `${wordsAmount} mots`
+    wordsNumberSliderValue.style.left = (wordsAmount * 60 / 7) + add + '%'
 
+    /**
+     * When the owner change value it's update the span above sliders
+     */
     gameDurationInputSlider.oninput = (() => {
         //updateSliders(time, words)
         let time = gameDurationInputSlider.value
@@ -3011,10 +3185,15 @@ function updateSliders() {
         let add = 6.428571428571429
         wordsNumberSliderValue.textContent = `${words} mots`
         wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
-
     });
 }
 
+/**
+ * Update les preferences de la partie lors de la phase d'attente des joueurs
+ *
+ * @param time
+ * @param words
+ */
 function updatePreferences(time, words) {
     const gameDuration = document.querySelector('.game-duration p span')
     const wordsNumber = document.querySelector('.words-number p span')
@@ -3023,6 +3202,13 @@ function updatePreferences(time, words) {
     wordsNumber.textContent = `${words} mots`
 }
 
+/**
+ * Update du scoreboard final
+ * TODO: Animations
+ *
+ * @param game
+ * @param users
+ */
 function updateScoreBoard(game, users) {
     const playerList = document.querySelector('.scoreboard');
 
@@ -3084,9 +3270,10 @@ module.exports = {
     updateWords,
     updateSliders,
     updatePreferences,
-    updateScoreBoard
+    updateScoreBoard,
+    updateWinInfos
 }
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 const Game = require('../classe/Game');
 const Word = require('../classe/Word')
 
@@ -3134,7 +3321,7 @@ class GameFactory {
 }
 
 module.exports = GameFactory;
-},{"../classe/Game":6,"../classe/Word":10,"./GameStatsFactory":14}],14:[function(require,module,exports){
+},{"../classe/Game":6,"../classe/Word":11,"./GameStatsFactory":15}],15:[function(require,module,exports){
 const GameStats = require('../classe/GameStats');
 
 class GameStatsFactory {
@@ -3147,7 +3334,7 @@ class GameStatsFactory {
 }
 
 module.exports = GameStatsFactory;
-},{"../classe/GameStats":7}],15:[function(require,module,exports){
+},{"../classe/GameStats":7}],16:[function(require,module,exports){
 const Room = require("../classe/Room");
 
 const UserFactory = require('./UserFactory');
@@ -3176,7 +3363,7 @@ class RoomFactory {
 }
 
 module.exports = RoomFactory;
-},{"../classe/Room":8,"./GameFactory":13,"./UserFactory":16}],16:[function(require,module,exports){
+},{"../classe/Room":9,"./GameFactory":14,"./UserFactory":17}],17:[function(require,module,exports){
 const User = require("../classe/User");
 
 class UserFactory {
@@ -3194,12 +3381,17 @@ class UserFactory {
 }
 
 module.exports = UserFactory
-},{"../classe/User":9}],17:[function(require,module,exports){
+},{"../classe/User":10}],18:[function(require,module,exports){
 (function (global,__dirname){(function (){
 const fs = require('fs');
 
 const Word = require('./classe/Word')
 
+/**
+ * Generate 4 random chars
+ *
+ * @returns {string}
+ */
 const roomCode = () => {
     let code = "";
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
@@ -3209,6 +3401,12 @@ const roomCode = () => {
     return code;
 }
 
+/**
+ * Verify if a roomCode is already generated
+ *
+ * @param code
+ * @returns {boolean}
+ */
 const codeExists = (code) => {
     for (const key in global.rooms) {
         if (key === code) return true;
@@ -3216,10 +3414,23 @@ const codeExists = (code) => {
     return false;
 }
 
+/**
+ * Capitalize a string
+ *
+ * @param str
+ * @returns {*}
+ */
 const capitalize = (str) => {
     return str.replace(/^\w/, c => {return c.toUpperCase()});
 }
 
+/**
+ * Create a cookie in client browser
+ *
+ * @param name
+ * @param value
+ * @param days
+ */
 function setCookie(name, value, days) {
     let expires = "";
     if (days) {
@@ -3230,6 +3441,12 @@ function setCookie(name, value, days) {
     document.cookie = name + "=" + (value || "")  + expires + "; path=/";
 }
 
+/**
+ * Get a cookie in client browser
+ *
+ * @param name
+ * @returns {string|null}
+ */
 function getCookie(name) {
     let nameEQ = name + "=";
     let ca = document.cookie.split(';');
@@ -3241,11 +3458,21 @@ function getCookie(name) {
     return null;
 }
 
+/**
+ * Generate a random avatar
+ *
+ * @returns {string}
+ */
 const genRandomAvatar = () => {
     const rand = Math.floor(Math.random()*(18-1)+1)
     return `avatar_${rand}.png`
 }
 
+/**
+ * Generate a random pseudo
+ *
+ * @returns {string}
+ */
 const randomPseudo = () => {
     const nouns = ['pigs','vein','thought','vessel','branch','pets','jump','note','statement','rate','pen','iron','corn','increase','plantation','force','shame','silver','spark','division','bat','growth','rose','society','calculator','bird','picture','girl','pot','toy','produce','stone','flesh']
     const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
@@ -3254,15 +3481,20 @@ const randomPseudo = () => {
     return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
 }
 
+/**
+ * Generate the game words
+ *
+ * @param game
+ */
 function genWords(game) {
 
     const finalWords = []
     let coords = []
     let firstLetters = []
     for (let i = 0; i < game.getWordAmount(); i++) {
-        let posRandom = Math.floor(Math.random() * (8 - 1) +1)
+        let posRandom = Math.floor(Math.random() * (20 - 1) +1)
         while (coords.includes(posRandom)) {
-            posRandom = Math.floor(Math.random() * (8 - 1) +1)
+            posRandom = Math.floor(Math.random() * (20 - 1) +1)
         }
 
         let word = randomWord()
@@ -3282,10 +3514,16 @@ function genWords(game) {
     game.setWords(finalWords);
 }
 
-const genSingleWord = (game) => {
+/**
+ * Generate a random word
+ *
+ * @param game
+ * @returns {Word}
+ */
+const genSingleWord = (game, word_final) => {
 
     let word = randomWord()
-    let position = Math.floor(Math.random() * (8 - 1) +1)
+    let position = Math.floor(Math.random() * (20 - 1) +1)
 
     const firsLetter = []
     const pos = []
@@ -3294,18 +3532,22 @@ const genSingleWord = (game) => {
         pos.push(game.getWords()[key].getPosition())
     }
 
-    while (firsLetter.includes(word.charAt(0))) {
+    while (firsLetter.includes(word.charAt(0)) || word === word_final) {
         word = randomWord()
     }
 
     while (pos.includes(position)) {
-        position = Math.floor(Math.random() * (8 - 1) +1);
+        position = Math.floor(Math.random() * (20 - 1) +1);
     }
 
     return new Word(word, position)
 }
 
-
+/**
+ * Get a random word from latin list
+ *
+ * @returns {string}
+ */
 const randomWord = () => {
     const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
     const words = wordsTXT.split('\r\n');
@@ -3324,7 +3566,7 @@ module.exports = {
     genSingleWord
 };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/..")
-},{"./classe/Word":10,"fs":1}],18:[function(require,module,exports){
+},{"./classe/Word":11,"fs":1}],19:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -3411,7 +3653,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -3472,7 +3714,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -3649,7 +3891,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -3922,7 +4164,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":22,"_process":5}],22:[function(require,module,exports){
+},{"./common":23,"_process":5}],23:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -4185,7 +4427,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":40}],23:[function(require,module,exports){
+},{"ms":41}],24:[function(require,module,exports){
 module.exports = (() => {
   if (typeof self !== "undefined") {
     return self;
@@ -4196,7 +4438,7 @@ module.exports = (() => {
   }
 })();
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 const Socket = require("./socket");
 
 module.exports = (uri, opts) => new Socket(uri, opts);
@@ -4212,7 +4454,7 @@ module.exports.Transport = require("./transport");
 module.exports.transports = require("./transports/index");
 module.exports.parser = require("engine.io-parser");
 
-},{"./socket":25,"./transport":26,"./transports/index":27,"engine.io-parser":38}],25:[function(require,module,exports){
+},{"./socket":26,"./transport":27,"./transports/index":28,"engine.io-parser":39}],26:[function(require,module,exports){
 const transports = require("./transports/index");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:socket");
@@ -4896,7 +5138,7 @@ function clone(obj) {
 
 module.exports = Socket;
 
-},{"./transports/index":27,"component-emitter":20,"debug":21,"engine.io-parser":38,"parseqs":41,"parseuri":42}],26:[function(require,module,exports){
+},{"./transports/index":28,"component-emitter":21,"debug":22,"engine.io-parser":39,"parseqs":42,"parseuri":43}],27:[function(require,module,exports){
 const parser = require("engine.io-parser");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:transport");
@@ -5017,7 +5259,7 @@ class Transport extends Emitter {
 
 module.exports = Transport;
 
-},{"component-emitter":20,"debug":21,"engine.io-parser":38}],27:[function(require,module,exports){
+},{"component-emitter":21,"debug":22,"engine.io-parser":39}],28:[function(require,module,exports){
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
 const XHR = require("./polling-xhr");
 const JSONP = require("./polling-jsonp");
@@ -5064,7 +5306,7 @@ function polling(opts) {
   }
 }
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":34,"./polling-jsonp":28,"./polling-xhr":29,"./websocket":32}],28:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":35,"./polling-jsonp":29,"./polling-xhr":30,"./websocket":33}],29:[function(require,module,exports){
 const Polling = require("./polling");
 const globalThis = require("../globalThis");
 
@@ -5261,7 +5503,7 @@ class JSONPPolling extends Polling {
 
 module.exports = JSONPPolling;
 
-},{"../globalThis":23,"./polling":30}],29:[function(require,module,exports){
+},{"../globalThis":24,"./polling":31}],30:[function(require,module,exports){
 /* global attachEvent */
 
 const XMLHttpRequest = require("../../contrib/xmlhttprequest-ssl/XMLHttpRequest");
@@ -5595,7 +5837,7 @@ function unloadHandler() {
 module.exports = XHR;
 module.exports.Request = Request;
 
-},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":34,"../globalThis":23,"../util":33,"./polling":30,"component-emitter":20,"debug":21}],30:[function(require,module,exports){
+},{"../../contrib/xmlhttprequest-ssl/XMLHttpRequest":35,"../globalThis":24,"../util":34,"./polling":31,"component-emitter":21,"debug":22}],31:[function(require,module,exports){
 const Transport = require("../transport");
 const parseqs = require("parseqs");
 const parser = require("engine.io-parser");
@@ -5802,7 +6044,7 @@ class Polling extends Transport {
 
 module.exports = Polling;
 
-},{"../transport":26,"debug":21,"engine.io-parser":38,"parseqs":41,"yeast":52}],31:[function(require,module,exports){
+},{"../transport":27,"debug":22,"engine.io-parser":39,"parseqs":42,"yeast":53}],32:[function(require,module,exports){
 const globalThis = require("../globalThis");
 
 module.exports = {
@@ -5811,7 +6053,7 @@ module.exports = {
   defaultBinaryType: "arraybuffer"
 };
 
-},{"../globalThis":23}],32:[function(require,module,exports){
+},{"../globalThis":24}],33:[function(require,module,exports){
 (function (Buffer){(function (){
 const Transport = require("../transport");
 const parser = require("engine.io-parser");
@@ -6070,7 +6312,7 @@ class WS extends Transport {
 module.exports = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../transport":26,"../util":33,"./websocket-constructor":31,"buffer":3,"debug":21,"engine.io-parser":38,"parseqs":41,"yeast":52}],33:[function(require,module,exports){
+},{"../transport":27,"../util":34,"./websocket-constructor":32,"buffer":3,"debug":22,"engine.io-parser":39,"parseqs":42,"yeast":53}],34:[function(require,module,exports){
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
     if (obj.hasOwnProperty(k)) {
@@ -6080,7 +6322,7 @@ module.exports.pick = (obj, ...attr) => {
   }, {});
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 
 const hasCORS = require("has-cors");
@@ -6122,7 +6364,7 @@ module.exports = function(opts) {
   }
 };
 
-},{"./globalThis":23,"has-cors":39}],35:[function(require,module,exports){
+},{"./globalThis":24,"has-cors":40}],36:[function(require,module,exports){
 const PACKET_TYPES = Object.create(null); // no Map = no polyfill
 PACKET_TYPES["open"] = "0";
 PACKET_TYPES["close"] = "1";
@@ -6145,7 +6387,7 @@ module.exports = {
   ERROR_PACKET
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 const { PACKET_TYPES_REVERSE, ERROR_PACKET } = require("./commons");
 
 const withNativeArrayBuffer = typeof ArrayBuffer === "function";
@@ -6204,7 +6446,7 @@ const mapBinary = (data, binaryType) => {
 
 module.exports = decodePacket;
 
-},{"./commons":35,"base64-arraybuffer":19}],37:[function(require,module,exports){
+},{"./commons":36,"base64-arraybuffer":20}],38:[function(require,module,exports){
 const { PACKET_TYPES } = require("./commons");
 
 const withNativeBlob =
@@ -6252,7 +6494,7 @@ const encodeBlobAsBase64 = (data, callback) => {
 
 module.exports = encodePacket;
 
-},{"./commons":35}],38:[function(require,module,exports){
+},{"./commons":36}],39:[function(require,module,exports){
 const encodePacket = require("./encodePacket");
 const decodePacket = require("./decodePacket");
 
@@ -6296,7 +6538,7 @@ module.exports = {
   decodePayload
 };
 
-},{"./decodePacket":36,"./encodePacket":37}],39:[function(require,module,exports){
+},{"./decodePacket":37,"./encodePacket":38}],40:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -6315,7 +6557,7 @@ try {
   module.exports = false;
 }
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -6479,7 +6721,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -6518,7 +6760,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -6588,7 +6830,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = exports.Socket = exports.Manager = exports.protocol = void 0;
@@ -6661,7 +6903,7 @@ var socket_1 = require("./socket");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_1.Socket; } });
 exports.default = lookup;
 
-},{"./manager":44,"./socket":46,"./url":48,"debug":21,"socket.io-parser":50}],44:[function(require,module,exports){
+},{"./manager":45,"./socket":47,"./url":49,"debug":22,"socket.io-parser":51}],45:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Manager = void 0;
@@ -7038,7 +7280,7 @@ class Manager extends typed_events_1.StrictEventEmitter {
 }
 exports.Manager = Manager;
 
-},{"./on":45,"./socket":46,"./typed-events":47,"backo2":18,"debug":21,"engine.io-client":24,"socket.io-parser":50}],45:[function(require,module,exports){
+},{"./on":46,"./socket":47,"./typed-events":48,"backo2":19,"debug":22,"engine.io-client":25,"socket.io-parser":51}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -7050,7 +7292,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = void 0;
@@ -7512,7 +7754,7 @@ class Socket extends typed_events_1.StrictEventEmitter {
 }
 exports.Socket = Socket;
 
-},{"./on":45,"./typed-events":47,"debug":21,"socket.io-parser":50}],47:[function(require,module,exports){
+},{"./on":46,"./typed-events":48,"debug":22,"socket.io-parser":51}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StrictEventEmitter = void 0;
@@ -7586,7 +7828,7 @@ class StrictEventEmitter extends Emitter {
 }
 exports.StrictEventEmitter = StrictEventEmitter;
 
-},{"component-emitter":20}],48:[function(require,module,exports){
+},{"component-emitter":21}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.url = void 0;
@@ -7654,7 +7896,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":21,"parseuri":42}],49:[function(require,module,exports){
+},{"debug":22,"parseuri":43}],50:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -7736,7 +7978,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary":51}],50:[function(require,module,exports){
+},{"./is-binary":52}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -8018,7 +8260,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary":49,"./is-binary":51,"component-emitter":20,"debug":21}],51:[function(require,module,exports){
+},{"./binary":50,"./is-binary":52,"component-emitter":21,"debug":22}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -8075,7 +8317,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -8145,4 +8387,4 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}]},{},[11]);
+},{}]},{},[12]);

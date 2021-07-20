@@ -3,6 +3,7 @@
     place-self: center;
 }
 
+/* First column */
 .word.case-1 {
     grid-column: 1;
     grid-row: 1;
@@ -20,22 +21,72 @@
     grid-row: 4;
 }
 .word.case-5 {
+    grid-column: 1;
+    grid-row: 5;
+}
+/* Second column */
+.word.case-6 {
     grid-column: 2;
     grid-row: 1;
 }
-.word.case-6 {
+.word.case-7 {
     grid-column: 2;
     grid-row: 2;
 }
-.word.case-7 {
+.word.case-8 {
     grid-column: 2;
     grid-row: 3;
 }
-.word.case-8 {
+.word.case-9 {
     grid-column: 2;
     grid-row: 4;
 }
-
+.word.case-10 {
+    grid-column: 2;
+    grid-row: 5;
+}
+/* Third column */
+.word.case-11 {
+    grid-column: 3;
+    grid-row: 1;
+}
+.word.case-12 {
+    grid-column: 3;
+    grid-row: 2;
+}
+.word.case-13 {
+    grid-column: 3;
+    grid-row: 3;
+}
+.word.case-14 {
+    grid-column: 3;
+    grid-row: 4;
+}
+.word.case-15 {
+    grid-column: 3;
+    grid-row: 5;
+}
+/* Fourth column */
+.word.case-16 {
+    grid-column: 4;
+    grid-row: 1;
+}
+.word.case-17 {
+    grid-column: 4;
+    grid-row: 2;
+}
+.word.case-18 {
+    grid-column: 4;
+    grid-row: 3;
+}
+.word.case-19 {
+    grid-column: 4;
+    grid-row: 4;
+}
+.word.case-20 {
+    grid-column: 4;
+    grid-row: 5;
+}
 
 .word .players-circles {
     display: flex;

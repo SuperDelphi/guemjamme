@@ -9,7 +9,8 @@ const {
     updateWords,
     updateSliders,
     updatePreferences,
-    updateScoreBoard
+    updateScoreBoard,
+    updateWinInfos
 } = require("./views/game_views");
 
 const RoomFactory = require('../factories/RoomFactory');
@@ -17,9 +18,12 @@ const GameFactory = require('../factories/GameFactory')
 const RF = new RoomFactory();
 const GF = new GameFactory()
 
+const Notification = require('../classe/Notification')
+const notification = new Notification(document)
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    const socket = io("/",{ transports: ["websocket"] });
+    const socket = io();
 
     /* Récupération des cookies */
     const uuid = getCookie("uuid");
@@ -61,8 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
         setPoints(userGS.getScore())
-    });
 
+        notification.new('new join', `Un nouveau joueur a rejoint la partie <br>Nombres de joueurs : ${game.getNbPlayer()}`, notification.types.INFO)
+    });
 
     /**
      * Show Link Button
@@ -71,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLinkText = document.getElementById('link')
     showLinkBtn.addEventListener('click', () => {
         if (room.getOwner().getUUID() !== uuid) return;
-        console.log('link shown')
         showLinkBtn.classList.toggle('hidden')
         showLinkText.classList.toggle('hidden')
 
@@ -90,9 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
         temp.select();
         document.execCommand("copy");
         temp.remove();
-        alert('Link Copied !')
+        notification.new('link copied', `Le lien pour accéder à votre partie a été copié dans votre presse-papier`, notification.types.INFO)
     });
-
 
     /**
      * Start Game Button Event
@@ -102,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (room.getOwner().getUUID() !== uuid) return;
         socket.emit('start_game', code);
     });
-
 
     /**
      * Lorsque la game a été déclarée comme commencée
@@ -119,14 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const preferencesSection = document.querySelector('.settings-section')
 
         resultSection.classList.add('hidden');
+        preferencesSection.classList.add('hidden')
+
         gameSection.classList.remove('hidden')
         playerList.classList.remove('hidden')
-        preferencesSection.classList.add('hidden')
 
         updateWords(game.getWords())
         PLAYING = true
-    });
 
+        notification.new('game started', `La partie viens de commencer ! Bonne chance !`, notification.types.SUCCESS, 2)
+    });
 
     /**
      * KeyDown Event listener
@@ -143,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.keyCode === 8 && input_user.length > 0) {
             input_user.pop();
             document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
-            socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
+            if (input_user.length > 0) return socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
 
         // Si la touche pressé est Enter
@@ -181,8 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
-        updatePlayerList(game, room.getUsers(), win_info)
+        updatePlayerList(game, room.getUsers())
         updateWords(game.getWords())
+        updateWinInfos(win_info)
 
         if (win_info.uuid === uuid) {
             document.getElementById('player-input').setAttribute('value', '');
@@ -212,15 +217,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerList = document.querySelector('.players-list')
         const preferencesSection = document.querySelector('.settings-section')
 
-        resultSection.classList.remove('hidden');
+        resultSection.classList.remove('hidden')
+
         gameSection.classList.add('hidden')
         playerList.classList.add('hidden')
         preferencesSection.classList.add('hidden')
 
-        updateSliders();
+        updateSliders(game.getDuration(), game.getWordAmount());
         updateScoreBoard(game, room.getUsers())
 
         console.log(game.getScoreBoard(), game.getStatus())
+
+        notification.new('game finish', `La partie se termine !`, notification.types.SUCCESS, 2)
     })
 
     /**
@@ -245,9 +253,44 @@ document.addEventListener('DOMContentLoaded', () => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
 
-        console.log(room)
         window.location.reload()
     });
+
+
+    /**
+     * If a user left the game
+     */
+    socket.on('user_left', (serial_room, userHasLeft) => {
+        room = RF.getFromSocket(serial_room);
+        game = room.getGame();
+
+        updatePlayerList(game, room.getUsers())
+        setNumberPlayer(game.getNbPlayer())
+
+        notification.new('user deconnexion', `${userHasLeft.name} à été déconnecté`, notification.types.WARNING)
+    });
+
+    /**
+     * If the game owner left the game
+     */
+    socket.on('owner_left', (userHasLeft) => {
+        if (userHasLeft.uuid !== room.getOwner().getUUID()) return
+
+        notification.new('owner deconnexion', `Le propriétaire de votre partie ${userHasLeft.name} à quitté, Cette partie va donc être fermée. <br>Vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR, 30)
+        setTimeout(() => {
+            window.location.replace('/')
+        }, 30000)
+    });
+
+    /**
+     * If the server is deconnecting
+     */
+    socket.on('disconnect', () => {
+        notification.new('deconnexion', 'you have been disconnected. You will redirect to main page in 30sec.', notification.types.ERROR)
+        setTimeout(() => {
+            window.location.replace('/')
+        }, 30000)
+    })
 })
 
 /**

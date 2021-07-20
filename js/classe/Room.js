@@ -15,7 +15,7 @@ class Room {
         this.users[owner.getUUID()] = owner;
     }
 
-    getUsers = () => {
+    getUsers = (uuid = null) => {
         return this.users;
     }
 

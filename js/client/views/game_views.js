@@ -4,9 +4,8 @@
  *
  * @param game
  * @param users
- * @param win_info
  */
-const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sign: 0}) => {
+const updatePlayerList = (game, users) => {
     const playerList = document.querySelector('.players-list');
 
     playerList.innerHTML = "";
@@ -27,47 +26,11 @@ const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sig
         const color = user[0].getInfo().color;
         const avatar = user[0].getInfo().avatar;
         const gameStat = game.getUserGameStats(user[0].getUUID());
-
-        /*if (user[0].getUUID() === win_info.uuid) {
-            const pts = win_info.pts
-            const word = win_info.word.word
-            const signe = win_info.sign
-
-            playerList.innerHTML += `
-                <div id="${user[0].getUUID()}" class="player_box color-${color}">
-                    <div class="player-picture">
-                        <img src="${avatar}" alt="Image du joueur">
-                        <div class="points-won ">
-                            <p>${word}</p>
-                            <div class="add-point">
-                                <p>${signe}</p>
-                                <p>${pts}</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="player-infos hidden">
-                        <p class="player-name">${name}</p>
-            
-                        <div class="player-score">
-                            <p id="points-list" class="player-points-count">${gameStat.getScore()}</p>
-                            <p class="player-points-title">pts</p>
-                        </div>
-                    </div>
-                </div>
-            `
-        }*/
         playerList.innerHTML += `
             <div id="${user[0].getUUID()}" class="player_box color-${color}">
                 <div class="player-picture">
                     <img src="${avatar}" alt="Image du joueur">
-                    <div class="points-won hidden">
-                        <p></p>
-                        <div class="add-point">
-                            <p></p>
-                            <p></p>
-                        </div>
-                    </div>
+                    <div class="points-won hidden"></div>
                 </div>
                 
                 <div class="player-infos">
@@ -80,8 +43,31 @@ const updatePlayerList = (game, users, win_info = {uuid: 0, word: 0, pts: 0, sig
                 </div>
             </div>
         `
-
     });
+}
+
+function updateWinInfos(win_info) {
+    const pts = win_info.pts
+    const word = win_info.word.word
+    const signe = win_info.sign
+
+    console.log(win_info)
+
+    const userWordDiv = document.querySelector(`[id="${win_info.uuid}"] .player-picture .points-won`)
+    const userInfoDiv = document.querySelector(`[id="${win_info.uuid}"] .player-infos`)
+    userWordDiv.innerHTML = `
+            <p>${word}</p>
+            <div class="add-point">
+                <p>${signe}</p>
+                <p>${pts}</p>
+            </div>`
+    userWordDiv.classList.remove('hidden')
+    userInfoDiv.classList.add('hidden')
+
+    setTimeout(() => {
+        userWordDiv.classList.add('hidden')
+        userInfoDiv.classList.remove('hidden')
+    }, 3000);
 }
 
 /**
@@ -168,14 +154,25 @@ function updateWords(words) {
  *  - game duration
  *  - word amount
  */
-function updateSliders() {
+function updateSliders(duration, wordsAmount) {
     const gameDurationSliderValue = document.querySelector('.game-duration.range .slider-value span')
     const wordsNumberSliderValue = document.querySelector('.words-number.range .slider-value span')
 
     const gameDurationInputSlider = document.querySelector('.game-duration.range input')
     const wordsNumberInputSlider = document.querySelector('.words-number.range input')
 
+    /**
+     * Defined the sliders pos in function of pre game preferences
+     */
+    gameDurationSliderValue.textContent = `${duration} sec.`
+    gameDurationSliderValue.style.left = (duration * 60 / 150) + 3 + '%'
+    let add = 6.428571428571429
+    wordsNumberSliderValue.textContent = `${wordsAmount} mots`
+    wordsNumberSliderValue.style.left = (wordsAmount * 60 / 7) + add + '%'
 
+    /**
+     * When the owner change value it's update the span above sliders
+     */
     gameDurationInputSlider.oninput = (() => {
         //updateSliders(time, words)
         let time = gameDurationInputSlider.value
@@ -189,10 +186,8 @@ function updateSliders() {
         let add = 6.428571428571429
         wordsNumberSliderValue.textContent = `${words} mots`
         wordsNumberSliderValue.style.left = (words * 60 / 7) + add + '%'
-
     });
 }
-
 
 /**
  * Update les preferences de la partie lors de la phase d'attente des joueurs
@@ -276,5 +271,6 @@ module.exports = {
     updateWords,
     updateSliders,
     updatePreferences,
-    updateScoreBoard
+    updateScoreBoard,
+    updateWinInfos
 }

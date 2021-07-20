@@ -24,7 +24,7 @@ class GameStats {
     }
 
     addPoints = (points) => {
-        this.score += Math.floor(points * this.multiplier);
+        this.score += Math.floor(points);
     }
 
     removePoints = (points) => {

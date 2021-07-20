@@ -2,6 +2,9 @@ const {} = require('../functions')
 const {setDefaultPseudo, updateSliders} = require('../client/views/index_views');
 const {io} = require('socket.io-client')
 
+const Notification = require('../classe/Notification')
+const notification = new Notification(document)
+
 const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     createRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        console.log('test')
-
         const gameDuration = document.getElementById('game_duration').value;
         const wordAmount = document.getElementById('words-number').value;
         const name = document.getElementById('name').value;
         const avatar = document.getElementById('avatar').getAttribute('src');
+
+        if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de plus de 6 caratères.', notification.types.WARNING)
 
         /**
          * Par défault le créateur de la room est en jaune (sans doute le passer coté serveur pour éviter les soucis)
