@@ -47,6 +47,7 @@ class Game {
     }
 
     setWords = (words) => {
+        if (words.length === 0) this.words = {}
         for (let i = 0; i < words.length; i++) {
             this.words[i] = words[i]
         }

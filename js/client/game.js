@@ -241,19 +241,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (room.getOwner().getUUID() !== uuid) return;
 
-        game.setPreferences(gameDuration, wordAmount)
-
-        socket.emit('restart_game', code, game);
+        socket.emit('restart_game', code, {gameDuration, wordAmount});
     });
 
     /**
      * Lorsque le serveur a créé une nouvelle game dans la room
      */
     socket.on('game_restarted', (serial_room) => {
-        room = RF.getFromSocket(serial_room);
-        game = room.getGame();
+        room = RF.getFromSocket(serial_room)
 
-        window.location.reload()
+        game = room.getGame();
+        user = room.getUsers()[uuid];
+        userGS = game.getUserGameStats(uuid);
+
+        updatePlayerList(game, room.getUsers())
+        updatePreferences(game.getDuration(), game.getWordAmount())
+
+        setTimer(game.getDurationFormated())
+        setNumberPlayer(game.getNbPlayer())
+        setPoints(userGS.getScore())
+
+        const resultSection = document.querySelector('.result-section');
+        const gameSection = document.querySelector('.game-section')
+        const playerList = document.querySelector('.players-list')
+        const preferencesSection = document.querySelector('.settings-section')
+
+        resultSection.classList.add('hidden')
+
+        gameSection.classList.add('hidden')
+        playerList.classList.remove('hidden')
+        preferencesSection.classList.remove('hidden')
     });
 
 

@@ -13,6 +13,7 @@ const Game = require('./js/classe/Game');
 
 const RoomFactory = require('./js/factories/RoomFactory');
 const GameFactory = require('./js/factories/GameFactory');
+const GameStats = require("./js/classe/GameStats");
 const RF = new RoomFactory();
 const GF = new GameFactory();
 
@@ -265,12 +266,25 @@ io.on('connection', socket => {
     /**
      * Lorsque l'owner de la game envoie une demande pour démarrer une nouvel partie
      */
-    socket.on('restart_game', (code, serial_game) => {
-        const newGame = new Game(code, serial_game.duration, serial_game.wordAmount)
-        for (const key in serial_game.users) {
-            newGame.addUser(key);
+    socket.on('restart_game', (code, t) => {
+        const game = global.rooms[code].getGame()
+        game.setPreferences(t.gameDuration, t.wordAmount)
+
+        game.setWords([])
+        game.setStatus(1)
+
+        for (const uuid in game.getUsers()) {
+            game.getUsers()[uuid] = new GameStats();
         }
-        global.rooms[code].setGame(newGame)
+
+        for (const uuid in global.rooms[code].getUsers()) {
+            const u = global.rooms[code].getUsers()[uuid]
+            u.resetCombos()
+        }
+
+        console.log(game, global.rooms[code])
+
+        global.rooms[code].setGame(game)
 
         socket.join(code)
         io.sockets.in(code).emit('game_restarted', global.rooms[code])

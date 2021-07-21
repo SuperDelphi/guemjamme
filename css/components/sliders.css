@@ -23,10 +23,12 @@
 .range.game-duration .slider-value span{
     color: var(--color_player_blue);
     left: 27%;
+    user-select: none;
 }
 .range.words-number .slider-value span {
     color: var(--color_player_green);
     left: 49%;
+    user-select: none;
 }
 
 .range .slider-value span:after{
@@ -38,6 +40,7 @@
 }
 
 .range input[type="range"] {
+    -webkit-appearance: none;
     height:5px;
     background:#ddd;
     border-radius: 5px;
@@ -48,11 +51,10 @@
 }
 
 .range input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
     appearance: none;
     border: 5px var(--color_white) solid;
-    width: 15px;
-    height: 15px;
+    width: 23px;
+    height: 23px;
     border-radius: 20px;
     cursor: pointer;
 }
