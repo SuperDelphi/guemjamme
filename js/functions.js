@@ -102,10 +102,10 @@ const randomPseudo = () => {
  * @param game
  */
 function genWords(game) {
-
     const finalWords = []
     let coords = []
     let firstLetters = []
+
     for (let i = 0; i < game.getWordAmount(); i++) {
         let posRandom = Math.floor(Math.random() * (20 - 1) +1)
         while (coords.includes(posRandom)) {
@@ -164,8 +164,8 @@ const genSingleWord = (game, word_final) => {
  * @returns {string}
  */
 const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
-    const words = wordsTXT.split('\r\n');
+    const wordsTXT = fs.readFileSync(__dirname+'/words/lat.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\n');
     return words[Math.floor(Math.random() * words.length)]
 }
 

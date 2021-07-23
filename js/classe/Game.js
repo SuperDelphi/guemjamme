@@ -34,7 +34,6 @@ class Game {
 
         this.startTime = Date.now();
         this.endtime = this.startTime + (1000 *  this.duration)
-        console.log('startTime', this.startTime)
 
         var interval = setInterval(() => {
             if (Date.now() - this.startTime > this.duration * 1000) {

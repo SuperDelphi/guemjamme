@@ -2826,7 +2826,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const char = "abcdefghijklmnopqrstuvwxyz";
     var input_user = []
     document.addEventListener('keydown', (e) => {
+        console.log(e)
         e.preventDefault();
+
+        if (e.ctrlKey && e.key === 'c' && e.target === document.getElementById('link')) {
+            document.getElementById('link').select()
+            document.execCommand("copy");
+            notification.new('link copied', `Le lien pour accéder à votre partie a été copié dans votre presse-papier`, notification.types.INFO)
+        }
 
         // Si le status de la game n'est pas 'PLAYING'
         if (game.getStatus() !== 'PLAYING' && !PLAYING) return
@@ -2913,8 +2920,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSliders(game.getDuration(), game.getWordAmount());
         updateScoreBoard(game, room.getUsers())
-
-        console.log(game.getScoreBoard(), game.getStatus())
 
         notification.new('game finish', `La partie se termine !`, notification.types.SUCCESS, 2)
     })
@@ -3505,10 +3510,10 @@ const randomPseudo = () => {
  * @param game
  */
 function genWords(game) {
-
     const finalWords = []
     let coords = []
     let firstLetters = []
+
     for (let i = 0; i < game.getWordAmount(); i++) {
         let posRandom = Math.floor(Math.random() * (20 - 1) +1)
         while (coords.includes(posRandom)) {
@@ -3567,8 +3572,8 @@ const genSingleWord = (game, word_final) => {
  * @returns {string}
  */
 const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
-    const words = wordsTXT.split('\r\n');
+    const wordsTXT = fs.readFileSync(__dirname+'/words/lat.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\n');
     return words[Math.floor(Math.random() * words.length)]
 }
 

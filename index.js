@@ -1,11 +1,18 @@
 const express = require('express');
+const https =  require('https')
+const { Server } = require("socket.io");
+const uuid4 = require('uuid4');
+const fs = require('fs')
+const path = require('path')
+
 const app = express();
 
-const server = require('http').createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(server);
+const server = https.createServer({
+    key: fs.readFileSync(path.join(__dirname, 'cert', 'wordus.ddns.net.key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, 'cert', 'wordus.ddns.net.cert.pem'))
+},app);
 
-const uuid4 = require('uuid4');
+const io = new Server(server);
 
 const User = require('./js/classe/User');
 const Room = require('./js/classe/Room');
@@ -153,10 +160,9 @@ io.on('connection', socket => {
 
         genWords(game);
 
-        console.log(game.getStatus())
         // Start the game by changing the status
         game.startGame(io);
-        console.log(game.getStatus())
+        console.log(code, 'Game Started')
 
         global.rooms[code].setGame(game)
 
@@ -245,7 +251,7 @@ io.on('connection', socket => {
             GS.removePoints(pts)
         }
 
-        console.log('combos', user.getCombos(), 'multiplier', GS.getMultiplier(),'score' , GS.getScore(), 'letters', letters.length, 'pts', pts, 'signe', signe)
+        //console.log('combos', user.getCombos(), 'multiplier', GS.getMultiplier(),'score' , GS.getScore(), 'letters', letters.length, 'pts', pts, 'signe', signe)
 
         const win_info = {
             uuid: uuid,
@@ -281,8 +287,6 @@ io.on('connection', socket => {
             const u = global.rooms[code].getUsers()[uuid]
             u.resetCombos()
         }
-
-        console.log(game, global.rooms[code])
 
         global.rooms[code].setGame(game)
 
@@ -351,6 +355,6 @@ io.on('connection', socket => {
     })
 });
 
-server.listen(3000, () => {
-    console.log('server running on port 3000')
+server.listen(443, () => {
+    console.log('server running on port 443')
 });

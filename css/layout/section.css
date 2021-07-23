@@ -99,7 +99,7 @@
 }
 .wrapper .settings-section form .invite-game .copy_link p {
     margin: .5rem;
-    padding: 1rem 5rem;
+    padding: 1rem 2rem;
     background-color: var(--color_grey);
     font-weight: 500;
     color: var(--color_black);
@@ -107,7 +107,7 @@
 }
 
 .wrapper .settings-section form .invite-game .copy_link input[type="text"] {
-    width: 50%;
+    width: 60%;
     margin: .5rem;
     padding: 1rem 2rem;
     border: none;
