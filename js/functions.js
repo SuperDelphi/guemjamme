@@ -93,7 +93,11 @@ const randomPseudo = () => {
     const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
     const adjectivs = ['special','womanly','deranged','blue','chivalrous','trashy','lively','near','plucky','groomed','known','tangy','guttural','smelly','public','gray','simplistic','depressed','ignorant','ritzy','elated','evasive','successful','misty','orange','ambiguous','even','demonic','disillusioned','madly','cold','charming','boiling']
 
-    return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
+    let pseudo = `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`
+
+    //if (pseudo.length > 20) return randomPseudo()
+
+    return pseudo;
 }
 
 /**

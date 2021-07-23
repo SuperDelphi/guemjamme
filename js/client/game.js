@@ -109,11 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Lorsque la game a été déclarée comme commencée
      */
+    var input_user = []
     socket.on('game_started', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
+
+        input_user = []
+        document.getElementById('player-input').setAttribute('value', '');
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -136,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
      * KeyDown Event listener
      */
     const char = "abcdefghijklmnopqrstuvwxyz";
-    var input_user = []
     document.addEventListener('keydown', (e) => {
         console.log(e)
         e.preventDefault();
@@ -218,6 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
         room.setGame(game)
 
         PLAYING = false;
+        input_user = []
+        document.getElementById('player-input').setAttribute('value', '');
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')

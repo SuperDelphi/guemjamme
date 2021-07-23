@@ -2419,7 +2419,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de spécifier un pseudo de plus de 6 caractères', notification.types.WARNING, 5)
 
-        if (name.length > 16) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de moins de 16 caratères.', notification.types.WARNING)
+        if (name.length > 20) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de moins de 16 caratères.', notification.types.WARNING)
 
         if (noRoom) return notification.new('no room find', `La room à laquelle vous tentez d\'acceder n\'existe pas, vérifiez si le code renseigné est le bon. <br>Sinon vous pouvez toujours créer une nouvelle room <a href="/">ICI</a>`, notification.types.ERROR)
 
@@ -2576,7 +2576,11 @@ const randomPseudo = () => {
     const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
     const adjectivs = ['special','womanly','deranged','blue','chivalrous','trashy','lively','near','plucky','groomed','known','tangy','guttural','smelly','public','gray','simplistic','depressed','ignorant','ritzy','elated','evasive','successful','misty','orange','ambiguous','even','demonic','disillusioned','madly','cold','charming','boiling']
 
-    return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
+    let pseudo = `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`
+
+    //if (pseudo.length > 20) return randomPseudo()
+
+    return pseudo;
 }
 
 /**
@@ -2585,10 +2589,10 @@ const randomPseudo = () => {
  * @param game
  */
 function genWords(game) {
-
     const finalWords = []
     let coords = []
     let firstLetters = []
+
     for (let i = 0; i < game.getWordAmount(); i++) {
         let posRandom = Math.floor(Math.random() * (20 - 1) +1)
         while (coords.includes(posRandom)) {
@@ -2647,8 +2651,8 @@ const genSingleWord = (game, word_final) => {
  * @returns {string}
  */
 const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname + '/words/lat.txt', {encoding: "utf8", flag: 'r'})
-    const words = wordsTXT.split('\r\n');
+    const wordsTXT = fs.readFileSync(__dirname+'/words/lat.txt', {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\n');
     return words[Math.floor(Math.random() * words.length)]
 }
 

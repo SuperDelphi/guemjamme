@@ -142,6 +142,8 @@ io.on('connection', socket => {
      * Lorsqu'un client arrive sur la page /game de sa room
      */
     socket.on('join', (code, uuid) => {
+        //if (global.rooms[code] !== undefined) return;
+
         const game = global.rooms[code].getGame();
         game.addUser(uuid);
 

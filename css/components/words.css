@@ -143,7 +143,7 @@
 
 
 .word p {
-    color: var(--color_word_default);
+    color: var(--color_word_font_fill);
     font-size: 1.4rem;
     font-weight: 600;
     text-transform: lowercase;

@@ -2243,7 +2243,6 @@ class Game {
 
         this.startTime = Date.now();
         this.endtime = this.startTime + (1000 *  this.duration)
-        console.log('startTime', this.startTime)
 
         var interval = setInterval(() => {
             if (Date.now() - this.startTime > this.duration * 1000) {
@@ -2797,11 +2796,15 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Lorsque la game a été déclarée comme commencée
      */
+    var input_user = []
     socket.on('game_started', (serial_room) => {
         room = RF.getFromSocket(serial_room);
         game = room.getGame();
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
+
+        input_user = []
+        document.getElementById('player-input').setAttribute('value', '');
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -2824,7 +2827,6 @@ document.addEventListener('DOMContentLoaded', () => {
      * KeyDown Event listener
      */
     const char = "abcdefghijklmnopqrstuvwxyz";
-    var input_user = []
     document.addEventListener('keydown', (e) => {
         console.log(e)
         e.preventDefault();
@@ -2906,6 +2908,8 @@ document.addEventListener('DOMContentLoaded', () => {
         room.setGame(game)
 
         PLAYING = false;
+        input_user = []
+        document.getElementById('player-input').setAttribute('value', '');
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -3501,7 +3505,11 @@ const randomPseudo = () => {
     const adverbs = ['weakly','intensely','highly','mortally','mysteriously','too','justly','well','wisely','hourly','coolly','instead','acidly','fast','mockingly','sleepily','devotedly','gladly','angrily','coaxingly','tediously','totally','powerfully','greatly','sometimes','bashfully','generally','evenly','below','seemingly','ever','sadly','knowingly']
     const adjectivs = ['special','womanly','deranged','blue','chivalrous','trashy','lively','near','plucky','groomed','known','tangy','guttural','smelly','public','gray','simplistic','depressed','ignorant','ritzy','elated','evasive','successful','misty','orange','ambiguous','even','demonic','disillusioned','madly','cold','charming','boiling']
 
-    return `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`;
+    let pseudo = `${capitalize(adjectivs[Math.floor(Math.random() * adjectivs.length)])}${capitalize(nouns[Math.floor(Math.random() * nouns.length)])}`
+
+    //if (pseudo.length > 20) return randomPseudo()
+
+    return pseudo;
 }
 
 /**
