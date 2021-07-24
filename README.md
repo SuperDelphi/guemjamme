@@ -15,6 +15,8 @@ In order to do that, you need to execute ``browserify input-file -o output-file`
 
 # About Game
 
+Play the game here https://wordus.ddns.net
+
 The concept of this game is to type as fast as possible and as many **Latin** words as possible (French/English soon) in the time allotted at the beginning of the game.
 
 During the game the words are chosen randomly from a bank of **2600 words**.  

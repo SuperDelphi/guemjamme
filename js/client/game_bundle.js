@@ -2708,7 +2708,15 @@ const GF = new GameFactory()
 const Notification = require('../classe/Notification')
 const notification = new Notification(document)
 
+var waitSong = new Audio('../../music/menu-song.mp3');
+var playSong = new Audio('../../music/play-Song.mp3');
+var sendWord = new Audio()
+
+
+var PLAYING = false;
+
 document.addEventListener('DOMContentLoaded', () => {
+    playSound(waitSong)
 
     const socket = io();
 
@@ -2722,8 +2730,6 @@ document.addEventListener('DOMContentLoaded', () => {
     var game
     var user
     var userGS
-
-    var PLAYING = false;
 
     /**
      * Quand un client arrive sur cette page (/game)
@@ -2805,6 +2811,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         input_user = []
         document.getElementById('player-input').setAttribute('value', '');
+
+        playSound(playSong);
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -2910,6 +2918,8 @@ document.addEventListener('DOMContentLoaded', () => {
         PLAYING = false;
         input_user = []
         document.getElementById('player-input').setAttribute('value', '');
+
+        playSound(waitSong)
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -3022,6 +3032,14 @@ const updateRoom = (socket, code, room) => {
            resolve(RF.getFromSocket(serial_room));
         });
     });
+}
+
+
+function playSound(sound) {
+    sound.play()
+    setTimeout(() => {
+        playSound(sound)
+    }, sound.duration)
 }
 },{"../classe/Notification":8,"../factories/GameFactory":14,"../factories/RoomFactory":16,"../functions":18,"./views/game_views":13,"socket.io-client":44}],13:[function(require,module,exports){
 /**
