@@ -142,7 +142,7 @@ io.on('connection', socket => {
      * Lorsqu'un client arrive sur la page /game de sa room
      */
     socket.on('join', (code, uuid) => {
-        //if (global.rooms[code] !== undefined) return;
+        if (global.rooms[code] === undefined) return;
 
         const game = global.rooms[code].getGame();
         game.addUser(uuid);
@@ -158,6 +158,8 @@ io.on('connection', socket => {
      * Start Game Event
      */
     socket.on('start_game', (code) => {
+        if (global.rooms[code] === undefined) return;
+
         const game = global.rooms[code].getGame();
 
         genWords(game);
@@ -176,6 +178,7 @@ io.on('connection', socket => {
      * Input d'un client
      */
     socket.on('input', (code, word_input, letters, uuid) => {
+        if (global.rooms[code] === undefined) return;
 
         //console.log(code, word_input, letters, uuid)
 
@@ -204,6 +207,8 @@ io.on('connection', socket => {
      * Lorsque le client presse `ENTER` pour envoyer un mot
      */
     socket.on('press_enter', (code, word_input, letters, uuid) => {
+        if (global.rooms[code] === undefined) return;
+
         const game = global.rooms[code].getGame()
         const user = global.rooms[code].getUsers()[uuid]
         const words = game.getWords()
@@ -275,6 +280,8 @@ io.on('connection', socket => {
      * Lorsque l'owner de la game envoie une demande pour démarrer une nouvel partie
      */
     socket.on('restart_game', (code, t) => {
+        if (global.rooms[code] === undefined) return;
+
         const game = global.rooms[code].getGame()
         game.setPreferences(t.gameDuration, t.wordAmount)
 
@@ -329,6 +336,7 @@ io.on('connection', socket => {
         if (socket.handshake.headers.referer.endsWith('/game')) {
             for (const uuid in global.users) {
                 const user = global.users[uuid]
+                if (user === undefined) return
                 if (user.socket.id === socket.id) {
                     const userHasLeft = global.rooms[user.code].getUsers()[uuid]
 

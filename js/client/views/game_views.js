@@ -51,8 +51,6 @@ function updateWinInfos(win_info) {
     const word = win_info.word.word
     const signe = win_info.sign
 
-    console.log(win_info)
-
     const userWordDiv = document.querySelector(`[id="${win_info.uuid}"] .player-picture .points-won`)
     const userInfoDiv = document.querySelector(`[id="${win_info.uuid}"] .player-infos`)
     userWordDiv.innerHTML = `

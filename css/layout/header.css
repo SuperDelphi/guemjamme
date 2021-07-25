@@ -19,6 +19,12 @@ header h1 a{
     color: var(--color_black);
 }
 
+header h1 i {
+    font-size: 1.6rem;
+    margin-left: 2rem;
+    cursor: pointer;
+}
+
 header .preferences {
     display: flex;
 }

@@ -2708,15 +2708,16 @@ const GF = new GameFactory()
 const Notification = require('../classe/Notification')
 const notification = new Notification(document)
 
-var waitSong = new Audio('../../music/menu-song.mp3');
-var playSong = new Audio('../../music/play-Song.mp3');
-var sendWord = new Audio()
+var sound = document.getElementById('sound')
 
+var succesSound = new Audio('../../music/succes.wav')
+var loseSound = new Audio('../../music/lose.wav')
 
 var PLAYING = false;
 
+
 document.addEventListener('DOMContentLoaded', () => {
-    playSound(waitSong)
+    sound.play()
 
     const socket = io();
 
@@ -2809,10 +2810,11 @@ document.addEventListener('DOMContentLoaded', () => {
         user = room.getUsers()[uuid];
         userGS = game.getUserGameStats(uuid);
 
+        sound.setAttribute('src', '../music/play-Song.mp3')
+        sound.play()
+
         input_user = []
         document.getElementById('player-input').setAttribute('value', '');
-
-        playSound(playSong);
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -2835,10 +2837,13 @@ document.addEventListener('DOMContentLoaded', () => {
      * KeyDown Event listener
      */
     const char = "abcdefghijklmnopqrstuvwxyz";
+    var haveCtrlA = false
     document.addEventListener('keydown', (e) => {
-        console.log(e)
         e.preventDefault();
 
+        console.log(e)
+
+        // Autorise uniquement le copier coller du lien
         if (e.ctrlKey && e.key === 'c' && e.target === document.getElementById('link')) {
             document.getElementById('link').select()
             document.execCommand("copy");
@@ -2848,15 +2853,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // Si le status de la game n'est pas 'PLAYING'
         if (game.getStatus() !== 'PLAYING' && !PLAYING) return
 
+        //Autorise le ctrl + a pour selectionner tous le mot dans le user input
+        if (e.ctrlKey && e.key === 'a') {
+            haveCtrlA = true
+            document.getElementById('player-input').focus()
+            return document.getElementById('player-input').select()
+        }
+
+        // Autorise le ctrl + suppr pour delete directement le mot dans le user input
+        if (e.ctrlKey && (e.key === 'Backspace' || e.key === 'Delete')) {
+            document.getElementById('player-input').setAttribute('value', '');
+            input_user = []
+        }
+
         // Si la touche pressé est BackSpace (suppr)
-        if (e.keyCode === 8 && input_user.length > 0) {
+        if (e.key === 'Backspace' && input_user.length > 0) {
+            if (e.target === document.getElementById('player-input') && haveCtrlA) {
+                 document.getElementById('player-input').setAttribute('value', '');
+                 haveCtrlA = false
+                 return input_user = []
+            }
             input_user.pop();
             document.getElementById('player-input').setAttribute('value', input_user.join('').toLowerCase());
             if (input_user.length > 0) return socket.emit('input', code, input_user.join('').toLowerCase(), input_user, uuid)
         }
 
         // Si la touche pressé est Enter
-        if (e.keyCode === 13 && input_user.length > 0) {
+        if (e.key === 'Enter' && input_user.length > 0) {
             const word_final = document.getElementById('player-input').getAttribute('value');
             socket.emit('press_enter', code, word_final.toLowerCase(), input_user, uuid);
         }
@@ -2898,6 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('player-input').setAttribute('value', '');
             input_user = []
             setPoints(userGS.getScore())
+            succesSound.play()
         }
     });
 
@@ -2919,7 +2943,8 @@ document.addEventListener('DOMContentLoaded', () => {
         input_user = []
         document.getElementById('player-input').setAttribute('value', '');
 
-        playSound(waitSong)
+        sound.setAttribute('src', '../music/menu-song.mp3')
+        sound.play()
 
         const resultSection = document.querySelector('.result-section');
         const gameSection = document.querySelector('.game-section')
@@ -2980,7 +3005,6 @@ document.addEventListener('DOMContentLoaded', () => {
         preferencesSection.classList.remove('hidden')
     });
 
-
     /**
      * If a user left the game
      */
@@ -3015,6 +3039,25 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace('/')
         }, 30000)
     })
+
+    /**
+     * Sound toggle
+     */
+    const volumeBtn = document.querySelector('header h1 i')
+    volumeBtn.addEventListener('click', () => {
+        volumeBtn.classList.toggle('fa-volume-mute')
+        volumeBtn.classList.toggle('fa-volume-up')
+
+        sound.volume = 1
+        succesSound.volume = 1
+        loseSound.volume = 1
+
+        if (volumeBtn.classList.contains('fa-volume-mute')) {
+            sound.volume = 0
+            succesSound.volume = 0
+            loseSound.volume = 0
+        }
+    })
 })
 
 /**
@@ -3032,14 +3075,6 @@ const updateRoom = (socket, code, room) => {
            resolve(RF.getFromSocket(serial_room));
         });
     });
-}
-
-
-function playSound(sound) {
-    sound.play()
-    setTimeout(() => {
-        playSound(sound)
-    }, sound.duration)
 }
 },{"../classe/Notification":8,"../factories/GameFactory":14,"../factories/RoomFactory":16,"../functions":18,"./views/game_views":13,"socket.io-client":44}],13:[function(require,module,exports){
 /**
@@ -3094,8 +3129,6 @@ function updateWinInfos(win_info) {
     const pts = win_info.pts
     const word = win_info.word.word
     const signe = win_info.sign
-
-    console.log(win_info)
 
     const userWordDiv = document.querySelector(`[id="${win_info.uuid}"] .player-picture .points-won`)
     const userInfoDiv = document.querySelector(`[id="${win_info.uuid}"] .player-infos`)
