@@ -193,12 +193,25 @@ function updateSliders(duration, wordsAmount) {
  * @param time
  * @param words
  */
-function updatePreferences(time, words) {
+function updatePreferences(time, words, lang) {
     const gameDuration = document.querySelector('.game-duration p span')
     const wordsNumber = document.querySelector('.words-number p span')
+    const langt = document.querySelector('.lang p span')
 
     gameDuration.textContent = `${time} sec.`
     wordsNumber.textContent = `${words} mots`
+
+    switch (lang) {
+        case 'lat':
+            langt.textContent = 'latin'
+            break
+        case 'en':
+            langt.textContent = 'anglais'
+            break
+        case 'fr':
+            langt.textContent = 'francais'
+            break
+    }
 }
 
 /**

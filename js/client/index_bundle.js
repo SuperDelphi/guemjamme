@@ -2365,7 +2365,7 @@ const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    setDefaultPseudo(randomPseudo())
+    //setDefaultPseudo(randomPseudo())
     updateSliders()
 
     let new_avatar = genRandomAvatar();
@@ -2386,7 +2386,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const gameDuration = document.getElementById('game_duration').value;
         const wordAmount = document.getElementById('words-number').value;
-        const name = document.getElementById('name').value;
+        const lang = document.getElementById('lang').value
+        const name = document.getElementById('name').value !== ''?
+            document.getElementById('name').value :
+            randomPseudo();
         const avatar = document.getElementById('avatar').getAttribute('src');
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de plus de 6 caratères.', notification.types.WARNING)
@@ -2398,9 +2401,10 @@ document.addEventListener('DOMContentLoaded', () => {
          * Les préférences par défault sont :
          *      - 60s
          *      - 5w
+         *      - lat
          */
         const color = 'yellow';
-        const preferences = {gameDuration, wordAmount};
+        const preferences = {gameDuration, wordAmount, lang};
 
         /**
          * Envoie une demande au server pour créer une nouvelle room
@@ -2422,7 +2426,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.location.replace("/game");
     });
-
 });
 },{"../classe/Notification":6,"../client/views/index_views":9,"../functions":10,"socket.io-client":36}],9:[function(require,module,exports){
 /**
@@ -2585,9 +2588,9 @@ function genWords(game) {
             posRandom = Math.floor(Math.random() * (20 - 1) +1)
         }
 
-        let word = randomWord()
+        let word = randomWord(game.getLang())
         while (firstLetters.includes(word.charAt(0))) {
-            word = randomWord()
+            word = randomWord(game.getLang())
         }
 
         firstLetters.push(word.charAt(0))
@@ -2610,7 +2613,7 @@ function genWords(game) {
  */
 const genSingleWord = (game, word_final) => {
 
-    let word = randomWord()
+    let word = randomWord(game.getLang())
     let position = Math.floor(Math.random() * (20 - 1) +1)
 
     const firsLetter = []
@@ -2621,7 +2624,7 @@ const genSingleWord = (game, word_final) => {
     }
 
     while (firsLetter.includes(word.charAt(0)) || word === word_final) {
-        word = randomWord()
+        word = randomWord(game.getLang())
     }
 
     while (pos.includes(position)) {
@@ -2636,9 +2639,10 @@ const genSingleWord = (game, word_final) => {
  *
  * @returns {string}
  */
-const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname+'/words/lat.txt', {encoding: "utf8", flag: 'r'})
-    const words = wordsTXT.split('\n');
+const randomWord = (lang) => {
+    const wordsTXT = fs.readFileSync(__dirname+`/words/${lang}.txt`, {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\r\n');
+    console.log(words)
     return words[Math.floor(Math.random() * words.length)]
 }
 

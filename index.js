@@ -76,7 +76,7 @@ io.on('connection', socket => {
         }
 
         const room = new Room(code, owner, preferences);
-        const game = new Game(code, preferences.gameDuration, preferences.wordAmount);
+        const game = new Game(code, preferences.gameDuration, preferences.wordAmount, preferences.lang);
         room.setGame(game)
 
         global.rooms[code] = room;
@@ -283,7 +283,7 @@ io.on('connection', socket => {
         if (global.rooms[code] === undefined) return;
 
         const game = global.rooms[code].getGame()
-        game.setPreferences(t.gameDuration, t.wordAmount)
+        game.setPreferences(t.gameDuration, t.wordAmount, t.lang)
 
         game.setWords([])
         game.setStatus(1)

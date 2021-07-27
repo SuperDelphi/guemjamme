@@ -19,7 +19,7 @@
 <div class="notifications-container"></div>
 <header>
     <h1>
-        <a href="/">WORDUS</a>
+        <a href="/">WORDUS.fr</a>
 
         <i class="fas fa-volume-up"></i>
     </h1>
@@ -54,6 +54,10 @@
                     <span>5 mots</span>
                 </div>
                 <input id="words-number" type="range" min="1" value="5" max="8" step="1">-->
+            </div>
+
+            <div class="lang">
+                <p>Langue des mots : <span>latin</span></p>
             </div>
 
             <div class="invite-game">
@@ -106,6 +110,15 @@
                     <span>5 mots</span>
                 </div>
                 <input id="new_words-number" type="range" min="1" value="5" max="8" step="1">
+            </div>
+
+            <div class="lang">
+                <label for="lang">Langue des mots</label>
+                <select name="lang" id="lang">
+                    <option value="lat">Latin (2600 mots)</option>
+                    <option value="en">Anglais (68000 mots)</option>
+                    <option value="fr">Français (320000 mots)</option>
+                </select>
             </div>
 
             <input id="restart_game" type="button" value="Relancer la partie !">

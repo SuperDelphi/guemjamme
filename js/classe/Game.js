@@ -17,8 +17,9 @@ class Game {
     timeleft
     wordAmount
     socket
+    lang
 
-    constructor(roomCode, duration, wordAmount) {
+    constructor(roomCode, duration, wordAmount, lang = 'fr') {
         this.roomCode = roomCode;
         this.status = Status.WAITING;
         this.words = {};
@@ -27,6 +28,7 @@ class Game {
         this.wordAmount = wordAmount;
 
         this.users = {}
+        this.lang = lang
     }
 
     startGame = (io) => {
@@ -152,9 +154,18 @@ class Game {
         return sortable
     }
 
-    setPreferences = (newTime, newWords) => {
+    setPreferences = (newTime, newWords, newLang) => {
         this.duration = newTime;
         this.wordAmount = newWords;
+        this.lang = newLang
+    }
+
+    getLang = () => {
+        return this.lang
+    }
+
+    setLang = (lang) => {
+        this.lang = lang
     }
 }
 

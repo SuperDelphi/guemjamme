@@ -9,7 +9,8 @@ class GameFactory {
         const g = new Game(
             game.roomCode,
             game.duration,
-            game.wordAmount
+            game.wordAmount,
+            game.lang
         );
 
         g.setStatus(game.status)

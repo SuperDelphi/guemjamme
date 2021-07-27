@@ -28,7 +28,6 @@ var loseSound = new Audio('../../music/lose.wav')
 
 var PLAYING = false;
 
-
 document.addEventListener('DOMContentLoaded', () => {
     sound.play()
 
@@ -66,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updatePreferences(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount(), game.getLang())
 
         setPlayerColor(user.getInfo().color);
         setTimer(game.getDurationFormated())
@@ -234,7 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('player-input').setAttribute('value', '');
             input_user = []
             setPoints(userGS.getScore())
-            succesSound.play()
+            if (win_info.sign === '+') return succesSound.play()
+            else return loseSound.play()
         }
     });
 
@@ -283,10 +283,11 @@ document.addEventListener('DOMContentLoaded', () => {
     restartGameBtn.addEventListener('click', () => {
         const gameDuration = document.getElementById('new_game_duration').value;
         const wordAmount = document.getElementById('new_words-number').value;
+        const lang = document.getElementById('lang').value
 
         if (room.getOwner().getUUID() !== uuid) return;
 
-        socket.emit('restart_game', code, {gameDuration, wordAmount});
+        socket.emit('restart_game', code, {gameDuration, wordAmount, lang});
     });
 
     /**
@@ -300,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updatePreferences(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount(), game.getLang())
 
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())

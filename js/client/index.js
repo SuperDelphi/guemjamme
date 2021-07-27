@@ -10,7 +10,7 @@ const { setCookie, genRandomAvatar, randomPseudo } = require('../functions');
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    setDefaultPseudo(randomPseudo())
+    //setDefaultPseudo(randomPseudo())
     updateSliders()
 
     let new_avatar = genRandomAvatar();
@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const gameDuration = document.getElementById('game_duration').value;
         const wordAmount = document.getElementById('words-number').value;
-        const name = document.getElementById('name').value;
+        const lang = document.getElementById('lang').value
+        const name = document.getElementById('name').value !== ''?
+            document.getElementById('name').value :
+            randomPseudo();
         const avatar = document.getElementById('avatar').getAttribute('src');
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de Spécifier un pseudo de plus de 6 caratères.', notification.types.WARNING)
@@ -43,9 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
          * Les préférences par défault sont :
          *      - 60s
          *      - 5w
+         *      - lat
          */
         const color = 'yellow';
-        const preferences = {gameDuration, wordAmount};
+        const preferences = {gameDuration, wordAmount, lang};
 
         /**
          * Envoie une demande au server pour créer une nouvelle room
@@ -67,5 +71,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.location.replace("/game");
     });
-
 });

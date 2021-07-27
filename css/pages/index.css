@@ -34,6 +34,33 @@ body.new_game .new-game-wrapper .words-number {
     margin-bottom: 2.5rem;
 }
 
+body.new_game .new-game-wrapper .lang {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+body.new_game .new-game-wrapper .lang label {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--color_word_font_fill)
+}
+
+body.new_game .new-game-wrapper .lang select {
+    padding: 12px 8px;
+    border: none;
+    background:#ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--color_player_dark_pink);
+    font-weight: 500;
+}
+
+body.new_game .new-game-wrapper .lang select:focus {
+    outline: none;
+}
+
 body.new_game .new-game-wrapper .last-line {
     display: flex;
     justify-content: space-between;
@@ -98,6 +125,13 @@ body.new_game .user-choice-wrapper .pseudo-choice {
     display: flex;
     flex-direction: column;
     align-self: flex-start;
+}
+
+body.new_game .user-choice-wrapper .pseudo-choice label {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--color_word_font_fill)
 }
 
 body.new_game .user-choice-wrapper .pseudo-choice input {

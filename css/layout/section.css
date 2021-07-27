@@ -70,12 +70,14 @@
     flex-direction: column;
 }
 .wrapper .settings-section form .game-duration,
-.wrapper .settings-section form .words-number {
+.wrapper .settings-section form .words-number,
+.wrapper .settings-section form .lang {
     margin-bottom: 2rem;
 }
 
 .wrapper .settings-section form .game-duration p span,
-.wrapper .settings-section form .words-number p span {
+.wrapper .settings-section form .words-number p span,
+.wrapper .settings-section form .lang p span {
     font-size: 1.5rem;
     text-align: center;
     font-weight: 600;
@@ -85,6 +87,9 @@
 }
 .wrapper .settings-section form .words-number p span {
     color: var(--color_player_green);
+}
+.wrapper .settings-section form .lang p span {
+    color: var(--color_player_dark_pink);
 }
 
 .wrapper .settings-section form .invite-game {
@@ -253,6 +258,25 @@
     display: flex;
     flex-direction: column;
     margin-bottom: 2rem;
+}
+
+.wrapper .result-section form .lang {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+}
+.wrapper .result-section form .lang label {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--color_word_font_fill)
+}
+.wrapper .result-section form .lang select {
+    padding: 12px 8px;
+    border: none;
+    background:#ddd;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 .wrapper .result-section .scoreboard {

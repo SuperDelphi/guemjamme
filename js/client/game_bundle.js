@@ -2226,8 +2226,9 @@ class Game {
     timeleft
     wordAmount
     socket
+    lang
 
-    constructor(roomCode, duration, wordAmount) {
+    constructor(roomCode, duration, wordAmount, lang = 'fr') {
         this.roomCode = roomCode;
         this.status = Status.WAITING;
         this.words = {};
@@ -2236,6 +2237,7 @@ class Game {
         this.wordAmount = wordAmount;
 
         this.users = {}
+        this.lang = lang
     }
 
     startGame = (io) => {
@@ -2361,9 +2363,18 @@ class Game {
         return sortable
     }
 
-    setPreferences = (newTime, newWords) => {
+    setPreferences = (newTime, newWords, newLang) => {
         this.duration = newTime;
         this.wordAmount = newWords;
+        this.lang = newLang
+    }
+
+    getLang = () => {
+        return this.lang
+    }
+
+    setLang = (lang) => {
+        this.lang = lang
     }
 }
 
@@ -2715,7 +2726,6 @@ var loseSound = new Audio('../../music/lose.wav')
 
 var PLAYING = false;
 
-
 document.addEventListener('DOMContentLoaded', () => {
     sound.play()
 
@@ -2753,7 +2763,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updatePreferences(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount(), game.getLang())
 
         setPlayerColor(user.getInfo().color);
         setTimer(game.getDurationFormated())
@@ -2921,7 +2931,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('player-input').setAttribute('value', '');
             input_user = []
             setPoints(userGS.getScore())
-            succesSound.play()
+            if (win_info.sign === '+') return succesSound.play()
+            else return loseSound.play()
         }
     });
 
@@ -2970,10 +2981,11 @@ document.addEventListener('DOMContentLoaded', () => {
     restartGameBtn.addEventListener('click', () => {
         const gameDuration = document.getElementById('new_game_duration').value;
         const wordAmount = document.getElementById('new_words-number').value;
+        const lang = document.getElementById('lang').value
 
         if (room.getOwner().getUUID() !== uuid) return;
 
-        socket.emit('restart_game', code, {gameDuration, wordAmount});
+        socket.emit('restart_game', code, {gameDuration, wordAmount, lang});
     });
 
     /**
@@ -2987,7 +2999,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userGS = game.getUserGameStats(uuid);
 
         updatePlayerList(game, room.getUsers())
-        updatePreferences(game.getDuration(), game.getWordAmount())
+        updatePreferences(game.getDuration(), game.getWordAmount(), game.getLang())
 
         setTimer(game.getDurationFormated())
         setNumberPlayer(game.getNbPlayer())
@@ -3272,12 +3284,25 @@ function updateSliders(duration, wordsAmount) {
  * @param time
  * @param words
  */
-function updatePreferences(time, words) {
+function updatePreferences(time, words, lang) {
     const gameDuration = document.querySelector('.game-duration p span')
     const wordsNumber = document.querySelector('.words-number p span')
+    const langt = document.querySelector('.lang p span')
 
     gameDuration.textContent = `${time} sec.`
     wordsNumber.textContent = `${words} mots`
+
+    switch (lang) {
+        case 'lat':
+            langt.textContent = 'latin'
+            break
+        case 'en':
+            langt.textContent = 'anglais'
+            break
+        case 'fr':
+            langt.textContent = 'francais'
+            break
+    }
 }
 
 /**
@@ -3363,7 +3388,8 @@ class GameFactory {
         const g = new Game(
             game.roomCode,
             game.duration,
-            game.wordAmount
+            game.wordAmount,
+            game.lang
         );
 
         g.setStatus(game.status)
@@ -3579,9 +3605,9 @@ function genWords(game) {
             posRandom = Math.floor(Math.random() * (20 - 1) +1)
         }
 
-        let word = randomWord()
+        let word = randomWord(game.getLang())
         while (firstLetters.includes(word.charAt(0))) {
-            word = randomWord()
+            word = randomWord(game.getLang())
         }
 
         firstLetters.push(word.charAt(0))
@@ -3604,7 +3630,7 @@ function genWords(game) {
  */
 const genSingleWord = (game, word_final) => {
 
-    let word = randomWord()
+    let word = randomWord(game.getLang())
     let position = Math.floor(Math.random() * (20 - 1) +1)
 
     const firsLetter = []
@@ -3615,7 +3641,7 @@ const genSingleWord = (game, word_final) => {
     }
 
     while (firsLetter.includes(word.charAt(0)) || word === word_final) {
-        word = randomWord()
+        word = randomWord(game.getLang())
     }
 
     while (pos.includes(position)) {
@@ -3630,9 +3656,10 @@ const genSingleWord = (game, word_final) => {
  *
  * @returns {string}
  */
-const randomWord = () => {
-    const wordsTXT = fs.readFileSync(__dirname+'/words/lat.txt', {encoding: "utf8", flag: 'r'})
-    const words = wordsTXT.split('\n');
+const randomWord = (lang) => {
+    const wordsTXT = fs.readFileSync(__dirname+`/words/${lang}.txt`, {encoding: "utf8", flag: 'r'})
+    const words = wordsTXT.split('\r\n');
+    console.log(words)
     return words[Math.floor(Math.random() * words.length)]
 }
 

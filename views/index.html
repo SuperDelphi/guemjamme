@@ -35,13 +35,20 @@
                     <input id="words-number" type="range" min="1" value="5" max="8" step="1">
                 </div>
 
+                <div class="lang">
+                    <label for="lang">Langue des mots</label>
+                    <select name="lang" id="lang">
+                        <option value="lat">Latin (2600 mots)</option>
+                        <option value="en">Anglais (68000 mots)</option>
+                        <option value="fr">Français (320000 mots)</option>
+                    </select>
+                </div>
+
                 <div class="last-line">
                     <p class="watermark">Wordus</p>
 
                     <input type="submit" value="Créer la partie !">
                 </div>
-
-
             </section>
 
             <section class="user-choice-wrapper">
@@ -63,7 +70,7 @@
 
                 <div class="pseudo-choice">
                     <label for="name">Choisis ton pseudo !</label>
-                    <input id="name" type="text">
+                    <input placeholder="..." id="name" type="text">
                 </div>
             </section>
         </form>

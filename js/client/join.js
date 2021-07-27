@@ -49,8 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(noPlace, noRoom)
     });
 
-    setDefaultPseudo(randomPseudo());
-
+    //setDefaultPseudo(randomPseudo());
 
     /**
      * Lorsque le client envoie le formulaire pour rejoindre la room
@@ -59,7 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
     joinRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const name = document.getElementById('name').value;
+        const name = document.getElementById('name').value !== ''?
+            document.getElementById('name').value :
+            randomPseudo();
         const avatar = document.getElementById('avatar').getAttribute('src');
 
         if (name.length < 6) return notification.new('incorrect pseudo', 'Merci de spécifier un pseudo de plus de 6 caractères', notification.types.WARNING, 5)
